@@ -1,0 +1,3358 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FortiGate · Aaqhil</title>
+<link rel="icon" type="image/png" href="46.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   Tokens
+   ============================================================ */
+:root {
+  --bg: #0a0a0a;
+  --bg-elevated: #111111;
+  --surface: #161616;
+  --surface-hover: #1c1c1c;
+  --border: #242424;
+  --border-strong: #333333;
+  --text: #f5f5f7;
+  --text-secondary: #a1a1a6;
+  --text-muted: #6e6e73;
+  --text-dim: #4a4a4f;
+  --accent: #da291c;
+  --accent-soft: rgba(218, 41, 28, 0.12);
+  --accent-glow: rgba(218, 41, 28, 0.25);
+  --success: #30d158;
+  --success-soft: rgba(48, 209, 88, 0.12);
+  --warn: #ff9f0a;
+  --mono: 'Geist Mono', ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas, monospace;
+  --sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --radius-lg: 16px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'ss01', 'cv11';
+  min-height: 100vh;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(218, 41, 28, 0.06), transparent 60%),
+    radial-gradient(ellipse 100% 100% at 100% 100%, rgba(255, 255, 255, 0.015), transparent 50%);
+}
+
+/* ============================================================
+   Header
+   ============================================================ */
+.header {
+  border-bottom: 1px solid var(--border);
+  background: rgba(10, 10, 10, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.header-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 18px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.logo-dot {
+  width: 10px;
+  height: 10px;
+  background: var(--accent);
+  border-radius: 50%;
+  box-shadow: 0 0 12px var(--accent-glow);
+  position: relative;
+}
+
+.logo-dot::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1px solid var(--accent-soft);
+  animation: pulse 3s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.4); opacity: 0; }
+}
+
+.brand-title {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.brand-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--mono);
+  letter-spacing: 0.02em;
+}
+
+.search-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-family: var(--sans);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-width: 220px;
+}
+
+.search-btn:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.search-btn svg {
+  width: 14px;
+  height: 14px;
+  opacity: 0.7;
+}
+
+.search-btn .search-label {
+  flex: 1;
+  text-align: left;
+}
+
+kbd {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 2px 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+
+/* ============================================================
+   Tabs
+   ============================================================ */
+.tabs {
+  border-bottom: 1px solid var(--border);
+  background: rgba(10, 10, 10, 0.5);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  position: sticky;
+  top: 65px;
+  z-index: 40;
+}
+
+.tabs-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 32px;
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabs-inner::-webkit-scrollbar { display: none; }
+
+.tab {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--sans);
+  font-size: 13.5px;
+  font-weight: 500;
+  padding: 14px 14px 16px;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.15s ease;
+  white-space: nowrap;
+  letter-spacing: -0.005em;
+}
+
+.tab:hover {
+  color: var(--text-secondary);
+}
+
+.tab.active {
+  color: var(--text);
+}
+
+.tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 14px;
+  right: 14px;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 2px 2px 0 0;
+}
+
+/* ============================================================
+   Main layout
+   ============================================================ */
+main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 48px 32px 120px;
+}
+
+.panel {
+  display: none;
+  animation: fadeIn 0.25s ease;
+}
+
+.panel.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.panel-header {
+  margin-bottom: 32px;
+}
+
+.panel-title {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  margin-bottom: 6px;
+}
+
+.panel-sub {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+/* ============================================================
+   Cards / Sections
+   ============================================================ */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+.card-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--mono);
+}
+
+.card-body {
+  padding: 20px;
+}
+
+.card-body.no-pad { padding: 0; }
+
+.card-tag {
+  font-size: 10.5px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 7px;
+  border-radius: 4px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.card-tag.warn { background: rgba(255, 159, 10, 0.12); color: var(--warn); }
+.card-tag.dim { background: var(--bg-elevated); color: var(--text-muted); border: 1px solid var(--border); }
+
+/* Generator card — featured */
+.gen-card {
+  background: linear-gradient(180deg, var(--surface), var(--bg-elevated));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  margin-bottom: 32px;
+  position: relative;
+  overflow: hidden;
+}
+
+.gen-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent-soft) 50%, transparent);
+}
+
+.gen-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+}
+
+.gen-heading {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-bottom: 24px;
+}
+
+/* ============================================================
+   Form controls
+   ============================================================ */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.form-label.required::after {
+  content: '*';
+  color: var(--accent);
+  margin-left: 4px;
+}
+
+.form-input, .form-select {
+  font-family: var(--mono);
+  font-size: 13.5px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  color: var(--text);
+  transition: all 0.15s ease;
+  width: 100%;
+}
+
+.form-input:focus, .form-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.form-input::placeholder { color: var(--text-dim); }
+
+.form-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a1a1a6' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  letter-spacing: -0.005em;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: #c01f15;
+  box-shadow: 0 4px 16px var(--accent-glow);
+}
+
+.btn-secondary {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text-secondary);
+}
+
+.btn-secondary:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Recent pills */
+.recent-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+  min-height: 26px;
+}
+
+.recent-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.recent-pill {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 4px 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.recent-pill:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+/* ============================================================
+   Code blocks
+   ============================================================ */
+.code-wrap {
+  position: relative;
+  background: #0d0d0d;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.code-wrap.empty {
+  border-style: dashed;
+}
+
+.code-wrap.empty .code-block {
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+.code-block {
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.65;
+  padding: 16px 56px 16px 18px;
+  white-space: pre;
+  overflow-x: auto;
+  color: #e5e5e7;
+  tab-size: 4;
+}
+
+.code-block::-webkit-scrollbar { height: 8px; }
+.code-block::-webkit-scrollbar-track { background: transparent; }
+.code-block::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+
+.copy-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: var(--sans);
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  letter-spacing: 0.01em;
+}
+
+.copy-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.copy-btn.copied {
+  background: var(--success-soft);
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.copy-btn svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* ============================================================
+   Tables
+   ============================================================ */
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+th, td {
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+th {
+  background: var(--bg-elevated);
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+tbody tr:last-child td { border-bottom: none; }
+
+tbody tr:hover { background: var(--surface-hover); }
+
+td code, .inline-code {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  background: var(--bg-elevated);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--text);
+}
+
+/* ============================================================
+   Collapsible
+   ============================================================ */
+details.collapse {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+details.collapse > summary {
+  padding: 16px 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  list-style: none;
+  font-weight: 500;
+  font-size: 14px;
+  transition: background 0.15s ease;
+}
+
+details.collapse > summary::-webkit-details-marker { display: none; }
+
+details.collapse > summary:hover { background: var(--surface-hover); }
+
+details.collapse > summary::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-right: 1.5px solid var(--text-muted);
+  border-bottom: 1.5px solid var(--text-muted);
+  transform: rotate(45deg);
+  transition: transform 0.2s ease;
+  margin-right: 4px;
+}
+
+details.collapse[open] > summary::after {
+  transform: rotate(-135deg);
+  margin-top: 4px;
+}
+
+details.collapse > .collapse-body {
+  padding: 0 20px 20px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.collapse-body p { margin-bottom: 12px; }
+.collapse-body p:last-child { margin-bottom: 0; }
+.collapse-body strong { color: var(--text); font-weight: 600; }
+.collapse-body ol, .collapse-body ul { padding-left: 22px; margin-bottom: 12px; }
+.collapse-body li { margin-bottom: 6px; }
+.collapse-body code { font-family: var(--mono); font-size: 12.5px; background: var(--bg-elevated); padding: 2px 6px; border-radius: 4px; color: var(--text); }
+
+/* ============================================================
+   Search modal
+   ============================================================ */
+.search-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 100;
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 100px 20px 20px;
+}
+
+.search-modal.open { display: flex; }
+
+.search-box {
+  width: 100%;
+  max-width: 600px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+}
+
+.search-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.search-input-wrap svg {
+  width: 16px;
+  height: 16px;
+  color: var(--text-muted);
+}
+
+.search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+}
+
+.search-input::placeholder { color: var(--text-dim); }
+
+.search-results {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.search-result {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.search-result:hover, .search-result.focused {
+  background: var(--surface-hover);
+}
+
+.search-result-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.search-result-meta {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.search-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* ============================================================
+   Footer
+   ============================================================ */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 28px 32px;
+  margin-top: 80px;
+}
+
+.footer-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--mono);
+  letter-spacing: 0.02em;
+}
+
+.footer-inner a {
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.footer-inner a:hover { color: var(--accent); }
+
+.muted { color: var(--text-dim); }
+
+/* Utility */
+.row-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 720px) {
+  .row-2col { grid-template-columns: 1fr; }
+  .header-inner { padding: 16px 20px; }
+  .tabs-inner { padding: 0 20px; }
+  main { padding: 32px 20px 80px; }
+  .search-btn { min-width: auto; }
+  .search-btn .search-label { display: none; }
+}
+
+.stack > * + * { margin-top: 14px; }
+
+.note {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--accent);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.note strong { color: var(--text); }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     Header
+============================================================ -->
+<header class="header">
+  <div class="header-inner">
+    <div class="brand">
+      <div class="logo-dot"></div>
+      <div>
+        <div class="brand-title">FortiGate Console</div>
+        <div class="brand-sub">field reference · v1.0</div>
+      </div>
+    </div>
+    <button class="search-btn" id="searchBtn" aria-label="Search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <span class="search-label">Search commands</span>
+      <kbd>⌘K</kbd>
+    </button>
+  </div>
+</header>
+
+<!-- ============================================================
+     Tabs
+============================================================ -->
+<nav class="tabs">
+  <div class="tabs-inner" id="tabBar">
+    <button class="tab active" data-tab="debug-flow">Debug Flow</button>
+    <button class="tab" data-tab="sniffer">Sniffer</button>
+    <button class="tab" data-tab="vpn">VPN</button>
+    <button class="tab" data-tab="routing">Routing &amp; BGP</button>
+    <button class="tab" data-tab="sdwan">SD-WAN</button>
+    <button class="tab" data-tab="firewall">Firewall</button>
+    <button class="tab" data-tab="system">HA &amp; System</button>
+    <button class="tab" data-tab="voip">VoIP</button>
+    <button class="tab" data-tab="archive">Concepts</button>
+  </div>
+</nav>
+
+<main>
+
+<!-- ============================================================
+     DEBUG FLOW
+============================================================ -->
+<section class="panel active" data-panel="debug-flow">
+  <div class="panel-header">
+    <h1 class="panel-title">Debug Flow</h1>
+    <p class="panel-sub">Generate filtered flow trace blocks. Fill the form, copy, paste.</p>
+  </div>
+
+  <div class="gen-card">
+    <div class="gen-title">Generator</div>
+    <h2 class="gen-heading">Trace a packet through FortiOS</h2>
+
+    <div class="form-grid">
+      <div class="form-field">
+        <label class="form-label" for="df-src">Source IP</label>
+        <input class="form-input" id="df-src" type="text" placeholder="172.16.5.20" autocomplete="off">
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="df-dst">Destination IP</label>
+        <input class="form-input" id="df-dst" type="text" placeholder="10.1.1.10" autocomplete="off">
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="df-proto">Protocol</label>
+        <select class="form-select" id="df-proto">
+          <option value="icmp">ICMP (1)</option>
+          <option value="tcp">TCP (6)</option>
+          <option value="udp">UDP (17)</option>
+          <option value="any">Any</option>
+        </select>
+      </div>
+      <div class="form-field" id="df-port-wrap" style="display:none;">
+        <label class="form-label" for="df-port">Port (optional)</label>
+        <input class="form-input" id="df-port" type="text" placeholder="443" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-primary" id="df-generate">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Generate
+      </button>
+      <button class="btn btn-secondary" id="df-stop">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
+        Stop &amp; clean up
+      </button>
+    </div>
+
+    <div class="recent-row" id="df-recent">
+      <span class="recent-label">Recent</span>
+    </div>
+
+    <div style="margin-top:20px;">
+      <div class="code-wrap empty" id="df-out-wrap">
+        <button class="copy-btn" data-copy="df-out" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy
+        </button>
+        <pre class="code-block" id="df-out">Fill in a destination or source IP and click Generate.</pre>
+      </div>
+    </div>
+  </div>
+
+  <details class="collapse">
+    <summary>Manual reference · raw commands</summary>
+    <div class="collapse-body">
+      <div class="card" style="margin-top:8px;">
+        <div class="card-header"><div class="card-title">Reset filters and stop tracing</div></div>
+        <div class="card-body no-pad">
+          <div class="code-wrap">
+            <button class="copy-btn" data-copy-text="diagnose debug disable
+diagnose debug reset
+diagnose debug flow trace stop
+diagnose debug flow filter clear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+            <pre class="code-block">diagnose debug disable
+diagnose debug reset
+diagnose debug flow trace stop
+diagnose debug flow filter clear</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">Show iprope (policy match) info</div></div>
+        <div class="card-body no-pad">
+          <div class="code-wrap">
+            <button class="copy-btn" data-copy-text="diagnose debug flow show iprope enable"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+            <pre class="code-block">diagnose debug flow show iprope enable</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="note" style="margin-top:14px;">
+        <strong>Pro tip:</strong> Always set filters before enabling debug. Running <code style="font-family:var(--mono);background:var(--bg-elevated);padding:1px 5px;border-radius:3px;">diagnose debug enable</code> on a busy box without filters will flood the console and may impact CPU.
+      </div>
+    </div>
+  </details>
+</section>
+
+<!-- ============================================================
+     SNIFFER
+============================================================ -->
+<section class="panel" data-panel="sniffer">
+  <div class="panel-header">
+    <h1 class="panel-title">Packet Sniffer</h1>
+    <p class="panel-sub">Built-in tcpdump-style capture. Useful for proving traffic is or isn't reaching the box.</p>
+  </div>
+
+  <div class="gen-card">
+    <div class="gen-title">Generator</div>
+    <h2 class="gen-heading">Build a sniffer one-liner</h2>
+
+    <div class="form-grid">
+      <div class="form-field">
+        <label class="form-label" for="sn-intf">Interface</label>
+        <input class="form-input" id="sn-intf" type="text" value="any" autocomplete="off">
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="sn-host1">Host 1</label>
+        <input class="form-input" id="sn-host1" type="text" placeholder="10.1.1.10" autocomplete="off">
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="sn-host2">Host 2 (optional)</label>
+        <input class="form-input" id="sn-host2" type="text" placeholder="10.2.2.20" autocomplete="off">
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="sn-port">Port (optional)</label>
+        <input class="form-input" id="sn-port" type="text" placeholder="443" autocomplete="off">
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="sn-verb">Verbosity</label>
+        <select class="form-select" id="sn-verb">
+          <option value="1">1 · headers only</option>
+          <option value="2">2 · headers + IP data</option>
+          <option value="3">3 · headers + ethernet</option>
+          <option value="4" selected>4 · headers + interface</option>
+          <option value="5">5 · headers + IP + interface</option>
+          <option value="6">6 · headers + ethernet + interface</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-primary" id="sn-generate">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Generate
+      </button>
+    </div>
+
+    <div style="margin-top:20px;">
+      <div class="code-wrap empty">
+        <button class="copy-btn" data-copy="sn-out" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy
+        </button>
+        <pre class="code-block" id="sn-out">Fill in at least one host and click Generate.</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Verbosity reference</div>
+      <span class="card-meta">FortiOS sniffer</span>
+    </div>
+    <div class="card-body no-pad">
+      <table>
+        <thead><tr><th>Level</th><th>Includes</th><th>When to use</th></tr></thead>
+        <tbody>
+          <tr><td><code>1</code></td><td>Packet headers</td><td>Quick check that traffic is hitting</td></tr>
+          <tr><td><code>2</code></td><td>Headers + IP payload</td><td>Decode protocol data</td></tr>
+          <tr><td><code>3</code></td><td>Headers + ethernet</td><td>L2 / MAC investigation</td></tr>
+          <tr><td><code>4</code></td><td>Headers + interface name</td><td>Most common, see ingress/egress port</td></tr>
+          <tr><td><code>5</code></td><td>Headers + IP payload + interface</td><td>Full L3 trace</td></tr>
+          <tr><td><code>6</code></td><td>Headers + ethernet + interface</td><td>L2/L3 full dump</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="note">
+    Add <code style="font-family:var(--mono);background:var(--bg-elevated);padding:1px 5px;border-radius:3px;">0 l</code> at the end to log packet count + add a local timestamp. Use <code style="font-family:var(--mono);background:var(--bg-elevated);padding:1px 5px;border-radius:3px;">0 a</code> for absolute UTC timestamps if you need to correlate with logs.
+  </div>
+</section>
+
+<!-- ============================================================
+     VPN
+============================================================ -->
+<section class="panel" data-panel="vpn">
+  <div class="panel-header">
+    <h1 class="panel-title">VPN</h1>
+    <p class="panel-sub">IPsec, SSL VPN, and Remote Access. Filtered IKE debugs and status commands.</p>
+  </div>
+
+  <div class="gen-card">
+    <div class="gen-title">Generator</div>
+    <h2 class="gen-heading">IPsec / RAVPN IKE debug (filtered)</h2>
+
+    <div class="form-grid">
+      <div class="form-field">
+        <label class="form-label required" for="ike-ip">Remote peer / client IP</label>
+        <input class="form-input" id="ike-ip" type="text" placeholder="203.0.113.5" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-primary" id="ike-generate">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Generate
+      </button>
+    </div>
+
+    <div style="margin-top:20px;">
+      <div class="code-wrap empty">
+        <button class="copy-btn" data-copy="ike-out" style="display:none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy
+        </button>
+        <pre class="code-block" id="ike-out">Enter the peer IP and click Generate.</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="row-2col">
+    <div class="card">
+      <div class="card-header"><div class="card-title">IPsec status</div></div>
+      <div class="card-body no-pad">
+        <div class="code-wrap">
+          <button class="copy-btn" data-copy-text="diag vpn ike gateway
+diag vpn ike gateway list name &lt;name&gt;
+diag vpn tunnel list
+diag vpn tunnel list name &lt;name&gt;
+get vpn ipsec tunnel summary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+          <pre class="code-block">diag vpn ike gateway
+diag vpn ike gateway list name &lt;name&gt;
+diag vpn tunnel list
+diag vpn tunnel list name &lt;name&gt;
+get vpn ipsec tunnel summary</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title">SSL VPN status</div></div>
+      <div class="card-body no-pad">
+        <div class="code-wrap">
+          <button class="copy-btn" data-copy-text="get vpn ssl mon
+get vpn ssl monitor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+          <pre class="code-block">get vpn ssl mon
+get vpn ssl monitor</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title">PPP / PPPoE debug</div></div>
+    <div class="card-body no-pad">
+      <div class="code-wrap">
+        <button class="copy-btn" data-copy-text="diag debug application pppoe -1
+diag debug application ppp -1
+diag debug enable"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+        <pre class="code-block">diag debug application pppoe -1
+diag debug application ppp -1
+diag debug enable</pre>
+      </div>
+    </div>
+  </div>
+
+  <details class="collapse">
+    <summary>Concepts · local-id / peer-id / exchange-interface-ip</summary>
+    <div class="collapse-body">
+      <p>When terminating multiple dial-up IPsec tunnels on a single public IP, and you have IKE phase-1 configured for each site, explicit Local and Peer IDs are required. Without them, the hub firewall cannot differentiate incoming connections and decide which IKE Phase 1 the tunnel lands on.</p>
+      <p>Setting these IDs ensures the FortiGate correctly matches the inbound IKE_SA_INIT payload to the specific Phase 1 configuration. Standard practice is to configure the Local ID on the remote sites and the corresponding Peer ID on the DC firewall.</p>
+      <p>If there is only one dial-up Phase 1 on the DC's public IP, you can safely skip setting IKE IDs. The FortiGate only has one configuration to match against anyway, so it knows exactly where to land the tunnel. Just keep in mind that skipping IDs is a bit of a trap if you ever need to add a second dial-up tunnel to that IP later.</p>
+      <p>When building the BGP overlay, the hub and spoke need to dynamically exchange IPs to route to each other. You can use <code>set exchange-interface-ip enable</code> to just swap the tunnel interface IPs, but the cleaner approach is peering BGP over loopbacks.</p>
+      <p>To get loopback peering working across a dial-up setup, use <code>set exchange-ip-addr4 &lt;loopback-ip&gt;</code>. This explicitly hands over the loopback address during the IKE exchange so BGP can establish properly.</p>
+      <p>Example real-world use case: large multi-spoke overlay where each spoke needs its IPsec tunnel interface IP advertised back so the hub can route. Without it, you'd have to statically configure every tunnel IP.</p>
+    </div>
+  </details>
+
+  <details class="collapse">
+    <summary>Reference · KB articles</summary>
+    <div class="collapse-body">
+      <ul>
+        <li>VPN troubleshooting: <code>FD46611</code></li>
+        <li>HA reference: <code>FD49264</code></li>
+        <li>Yuriskinfo debug cheat sheet: <code>github.com/yuriskinfo/cheat-sheets</code></li>
+      </ul>
+    </div>
+  </details>
+</section>
+
+<!-- ============================================================
+     ROUTING & BGP
+============================================================ -->
+<section class="panel" data-panel="routing">
+  <div class="panel-header">
+    <h1 class="panel-title">Routing &amp; BGP</h1>
+    <p class="panel-sub">Route inspection, BGP peering, soft reconfigs.</p>
+  </div>
+
+  <div class="row-2col">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Route lookup for a host</div></div>
+      <div class="card-body no-pad">
+        <div class="code-wrap">
+          <button class="copy-btn" data-copy-text="get router info routing-table details &lt;host&gt;
+get router info routing-table database
+show system interface"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+          <pre class="code-block">get router info routing-table details &lt;host&gt;
+get router info routing-table database
+show system interface</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title">BGP inspection</div></div>
+      <div class="card-body no-pad">
+        <div class="code-wrap">
+          <button class="copy-btn" data-copy-text="get router info bgp sum
+get router info bgp network                # see weight
+get router info bgp network &lt;x.x.x.x&gt;
+get router info bgp neighbors &lt;ip&gt; advertised-routes
+get router info bgp neighbors &lt;ip&gt; received-routes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+          <pre class="code-block">get router info bgp sum
+get router info bgp network                # see weight
+get router info bgp network &lt;x.x.x.x&gt;
+get router info bgp neighbors &lt;ip&gt; advertised-routes
+get router info bgp neighbors &lt;ip&gt; received-routes</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">BGP peer reset</div>
+      <span class="card-tag warn">production impact</span>
+    </div>
+    <div class="card-body no-pad">
+      <div class="code-wrap">
+        <button class="copy-btn" data-copy-text="execute router clear bgp all soft           # soft reconfig all
+execute router clear bgp ip 172.16.x.x      # specific neighbor
+
+# Inside neighbor:
+set shutdown enable        # take peer down
+unset shutdown             # bring it back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+        <pre class="code-block">execute router clear bgp all soft           # soft reconfig all
+execute router clear bgp ip 172.16.x.x      # specific neighbor
+
+# Inside neighbor:
+set shutdown enable        # take peer down
+unset shutdown             # bring it back</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>Soft reset</strong> uses the route-refresh capability and doesn't tear the session. Hard reset (<code style="font-family:var(--mono);background:var(--bg-elevated);padding:1px 5px;border-radius:3px;">execute router clear bgp all</code>) bounces the TCP session and re-establishes from scratch. Always try soft first.
+  </div>
+</section>
+
+<!-- ============================================================
+     SD-WAN
+============================================================ -->
+<section class="panel" data-panel="sdwan">
+  <div class="panel-header">
+    <h1 class="panel-title">SD-WAN</h1>
+    <p class="panel-sub">Health-check, service mapping, and the FIB interaction model.</p>
+  </div>
+
+  <div class="row-2col">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Health-check (member SLA)</div></div>
+      <div class="card-body no-pad">
+        <div class="code-wrap">
+          <button class="copy-btn" data-copy-text="diagnose sys sdwan health-check
+diagnose sys sdwan health-check status
+diagnose sys sdwan health-check status &lt;name&gt;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+          <pre class="code-block">diagnose sys sdwan health-check
+diagnose sys sdwan health-check status
+diagnose sys sdwan health-check status &lt;name&gt;</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title">Service rules &amp; members</div></div>
+      <div class="card-body no-pad">
+        <div class="code-wrap">
+          <button class="copy-btn" data-copy-text="diagnose sys sdwan service
+diagnose sys sdwan member
+diagnose sys sdwan neighbor
+diagnose sys sdwan zone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+          <pre class="code-block">diagnose sys sdwan service
+diagnose sys sdwan member
+diagnose sys sdwan neighbor
+diagnose sys sdwan zone</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Internet service database (ISDB) lookup</div>
+      <span class="card-meta">app-aware steering</span>
+    </div>
+    <div class="card-body no-pad">
+      <div class="code-wrap">
+        <button class="copy-btn" data-copy-text="diagnose internet-service id &lt;id&gt;
+diagnose internet-service match root &lt;ip&gt;
+diagnose firewall internet-service-app match root &lt;ip&gt;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+        <pre class="code-block">diagnose internet-service id &lt;id&gt;
+diagnose internet-service match root &lt;ip&gt;
+diagnose firewall internet-service-app match root &lt;ip&gt;</pre>
+      </div>
+    </div>
+  </div>
+
+  <details class="collapse" open>
+    <summary>Concepts · how FIB and SD-WAN rules interact</summary>
+    <div class="collapse-body">
+      <p>The FIB acts as the <strong>gatekeeper</strong> for SD-WAN rules. You cannot apply an SD-WAN rule if the routing table doesn't already agree the traffic belongs in the SD-WAN zone.</p>
+
+      <p><strong>Order of evaluation:</strong></p>
+      <ol>
+        <li><strong>Regular Policy Routes (PBR)</strong> — always checked first. If a manual PBR matches with a valid gateway, traffic routes immediately and both SD-WAN rules and the standard table are bypassed.</li>
+        <li><strong>FIB lookup</strong> — if no PBR match, FortiOS does a standard routing-table lookup before applying SD-WAN rules.
+          <ul>
+            <li>If the best route points to a <strong>non-SD-WAN interface</strong>, SD-WAN rules are ignored entirely. This protects LAN-to-LAN and out-of-band management traffic from being hijacked.</li>
+            <li>If the best route points to an SD-WAN member (e.g. default route via the sd-wan zone), the SD-WAN engine unlocks.</li>
+          </ul>
+        </li>
+        <li><strong>SD-WAN rules</strong> — evaluated top-down. Application signatures and SLA health pick the best physical member.
+          <ul>
+            <li>Caveat: the chosen member must also have a valid route to the destination, otherwise FortiGate skips it and evaluates the next.</li>
+          </ul>
+        </li>
+        <li><strong>Implicit SD-WAN rule</strong> — fallback at the bottom. Hands control back to the FIB and load-balances across members using ECMP.</li>
+      </ol>
+      <p>This is why "I added an SD-WAN rule and nothing happened" almost always traces back to step 2: the routing table doesn't see the SD-WAN zone as the best path for that destination.</p>
+    </div>
+  </details>
+</section>
+
+<!-- ============================================================
+     FIREWALL
+============================================================ -->
+<section class="panel" data-panel="firewall">
+  <div class="panel-header">
+    <h1 class="panel-title">Firewall</h1>
+    <p class="panel-sub">Sessions, NAT, policy lookup, Geo-IP.</p>
+  </div>
+
+  <div class="row-2col">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Session inspection</div></div>
+      <div class="card-body no-pad">
+        <div class="code-wrap">
+          <button class="copy-btn" data-copy-text="# Filter
+diagnose sys session filter clear
+diagnose sys session filter src &lt;ip&gt;
+diagnose sys session filter dst &lt;ip&gt;
+diagnose sys session filter dport &lt;port&gt;
+diagnose sys session filter proto 6
+
+# List / count / clear matching
+diagnose sys session list
+diagnose sys session stat
+diagnose sys session clear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+          <pre class="code-block"># Filter
+diagnose sys session filter clear
+diagnose sys session filter src &lt;ip&gt;
+diagnose sys session filter dst &lt;ip&gt;
+diagnose sys session filter dport &lt;port&gt;
+diagnose sys session filter proto 6
+
+# List / count / clear matching
+diagnose sys session list
+diagnose sys session stat
+diagnose sys session clear</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title">NAT / IP pool</div></div>
+      <div class="card-body no-pad">
+        <div class="code-wrap">
+          <button class="copy-btn" data-copy-text="diagnose firewall ippool list
+diagnose firewall ippool-all list
+diagnose firewall ippool-all stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+          <pre class="code-block">diagnose firewall ippool list
+diagnose firewall ippool-all list
+diagnose firewall ippool-all stats</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title">DHCP — exclude an IP from lease</div></div>
+    <div class="card-body no-pad">
+      <div class="code-wrap">
+        <button class="copy-btn" data-copy-text="config system dhcp server
+    edit 4
+        config exclude-range
+            edit 1
+                set start-ip 172.16.11.137
+                set end-ip   172.16.11.137
+            next
+        end
+    end
+end"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+        <pre class="code-block">config system dhcp server
+    edit 4
+        config exclude-range
+            edit 1
+                set start-ip 172.16.11.137
+                set end-ip   172.16.11.137
+            next
+        end
+    end
+end</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Geo-IP block template</div>
+      <span class="card-tag">template</span>
+    </div>
+    <div class="card-body no-pad">
+      <div class="code-wrap">
+        <button class="copy-btn" data-copy-text='config firewall address
+    edit "China"
+        set type geography
+        set associated-interface "INTERNET"
+        set country "CN"
+    next
+    edit "Russia"
+        set type geography
+        set associated-interface "INTERNET"
+        set country "RU"
+    next
+end
+
+config firewall addrgrp
+    edit "Geo Blocked Countries"
+        set member "Russia" "China"
+    next
+end
+
+config firewall policy
+    edit 76
+        set name "Geo Block"
+        set srcintf "INTERNET"
+        set dstintf "any"
+        set srcaddr "Geo Blocked Countries"
+        set dstaddr "all"
+        set schedule "always"
+        set service "ALL"
+        set logtraffic all
+        set logtraffic-start enable
+    next
+end'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+        <pre class="code-block">config firewall address
+    edit "China"
+        set type geography
+        set associated-interface "INTERNET"
+        set country "CN"
+    next
+    edit "Russia"
+        set type geography
+        set associated-interface "INTERNET"
+        set country "RU"
+    next
+end
+
+config firewall addrgrp
+    edit "Geo Blocked Countries"
+        set member "Russia" "China"
+    next
+end
+
+config firewall policy
+    edit 76
+        set name "Geo Block"
+        set srcintf "INTERNET"
+        set dstintf "any"
+        set srcaddr "Geo Blocked Countries"
+        set dstaddr "all"
+        set schedule "always"
+        set service "ALL"
+        set logtraffic all
+        set logtraffic-start enable
+    next
+end</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     HA & SYSTEM
+============================================================ -->
+<section class="panel" data-panel="system">
+  <div class="panel-header">
+    <h1 class="panel-title">HA &amp; System</h1>
+    <p class="panel-sub">Failover, sync checks, LTE APN, FortiGuard, performance.</p>
+  </div>
+
+  <div class="row-2col">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">HA failover</div>
+        <span class="card-tag warn">disruptive</span>
+      </div>
+      <div class="card-body no-pad">
+        <div class="code-wrap">
+          <button class="copy-btn" data-copy-text="execute ha failover set 1          # force failover
+execute ha failover status         # check
+execute ha failover unset 1        # revert"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+          <pre class="code-block">execute ha failover set 1          # force failover
+execute ha failover status         # check
+execute ha failover unset 1        # revert</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title">HA status &amp; sync</div></div>
+      <div class="card-body no-pad">
+        <div class="code-wrap">
+          <button class="copy-btn" data-copy-text="get system ha status
+diag sys ha reset-uptime
+exec ha manage 1 ct                # connect to peer
+diag system ha checksum show"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+          <pre class="code-block">get system ha status
+diag sys ha reset-uptime
+exec ha manage 1 ct                # connect to peer
+diag system ha checksum show</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row-2col">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Performance &amp; conserve mode</div></div>
+      <div class="card-body no-pad">
+        <div class="code-wrap">
+          <button class="copy-btn" data-copy-text="get system performance status
+diagnose sys top 1 50
+diagnose hardware sysinfo memory
+diagnose hardware sysinfo conserve
+get system status"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+          <pre class="code-block">get system performance status
+diagnose sys top 1 50
+diagnose hardware sysinfo memory
+diagnose hardware sysinfo conserve
+get system status</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title">FortiGuard &amp; central mgmt</div></div>
+      <div class="card-body no-pad">
+        <div class="code-wrap">
+          <button class="copy-btn" data-copy-text="diag fdsm central-management status
+diag debug rating
+diag test update info
+execute update-now
+show sys fortiguard
+show sys ntp
+show sys dns"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+          <pre class="code-block">diag fdsm central-management status
+diag debug rating
+diag test update info
+execute update-now
+show sys fortiguard
+show sys ntp
+show sys dns</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row-2col">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Get egress public IP</div></div>
+      <div class="card-body no-pad">
+        <div class="code-wrap">
+          <button class="copy-btn" data-copy-text="diagnose sys waninfo ipify"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+          <pre class="code-block">diagnose sys waninfo ipify</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title">ARP / NIC</div></div>
+      <div class="card-body no-pad">
+        <div class="code-wrap">
+          <button class="copy-btn" data-copy-text="get system arp
+diag sys arp delete &lt;port&gt; &lt;x.x.x.x&gt;
+get hardware nic &lt;port&gt;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+          <pre class="code-block">get system arp
+diag sys arp delete &lt;port&gt; &lt;x.x.x.x&gt;
+get hardware nic &lt;port&gt;</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">LTE / 4G modem — Optus Yes Business IP</div>
+      <span class="card-tag">field</span>
+    </div>
+    <div class="card-body no-pad">
+      <div class="code-wrap">
+        <button class="copy-btn" data-copy-text='config system lte-modem
+    set apn "yesbusinessip"
+end
+
+# Wait for the profile-changed prompt, answer Y to reboot.
+# Allow up to ~5 minutes for the modem to come back.
+
+config system console
+    set output standard
+end'><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+        <pre class="code-block">config system lte-modem
+    set apn "yesbusinessip"
+end
+
+# Wait for the profile-changed prompt, answer Y to reboot.
+# Allow up to ~5 minutes for the modem to come back.
+
+config system console
+    set output standard
+end</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title">Built-in traffic test (iperf)</div></div>
+    <div class="card-body no-pad">
+      <div class="code-wrap">
+        <button class="copy-btn" data-copy-text="diag traffictest client-intf port1
+diag traffictest server-intf port1
+diag traffictest port 5201
+diag traffictest run -c 116.216.16.4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+        <pre class="code-block">diag traffictest client-intf port1
+diag traffictest server-intf port1
+diag traffictest port 5201
+diag traffictest run -c 116.216.16.4</pre>
+      </div>
+    </div>
+  </div>
+
+  <details class="collapse">
+    <summary>SSH crypto · disable vs enable strong-crypto</summary>
+    <div class="collapse-body">
+      <p><strong>When to disable:</strong> connecting to legacy gear (older switches, OOB consoles) that only supports older MAC algorithms. Note this weakens management plane security; only do it if you must.</p>
+      <div class="code-wrap" style="margin-top:8px;">
+        <button class="copy-btn" data-copy-text="config system global
+    set strong-crypto disable
+    set ssh-mac-algo hmac-md5 hmac-sha1 hmac-sha2-256 hmac-sha2-256-etm@openssh.com hmac-sha2-512 hmac-sha2-512-etm@openssh.com
+end"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+        <pre class="code-block">config system global
+    set strong-crypto disable
+    set ssh-mac-algo hmac-md5 hmac-sha1 hmac-sha2-256 hmac-sha2-256-etm@openssh.com hmac-sha2-512 hmac-sha2-512-etm@openssh.com
+end</pre>
+      </div>
+      <p style="margin-top:14px;"><strong>Restore strong-crypto:</strong></p>
+      <div class="code-wrap" style="margin-top:8px;">
+        <button class="copy-btn" data-copy-text="config system global
+    set strong-crypto enable
+    set ssh-mac-algo hmac-sha2-256 hmac-sha2-256-etm@openssh.com hmac-sha2-512 hmac-sha2-512-etm@openssh.com
+end"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+        <pre class="code-block">config system global
+    set strong-crypto enable
+    set ssh-mac-algo hmac-sha2-256 hmac-sha2-256-etm@openssh.com hmac-sha2-512 hmac-sha2-512-etm@openssh.com
+end</pre>
+      </div>
+    </div>
+  </details>
+
+  <details class="collapse">
+    <summary>Support recovery details</summary>
+    <div class="collapse-body">
+      <p><strong>Fortinet AU support:</strong> <code>1 800 043 218</code></p>
+      <p><strong>Recovery password:</strong> <code>131703-234421-082764-435666-575696-441881-056496-671858</code></p>
+      <p class="muted" style="color:var(--text-dim);font-size:12.5px;margin-top:14px;">Keep this collapsed in shared screens.</p>
+    </div>
+  </details>
+</section>
+
+<!-- ============================================================
+     VOIP
+============================================================ -->
+<section class="panel" data-panel="voip">
+  <div class="panel-header">
+    <h1 class="panel-title">VoIP &amp; SIP</h1>
+    <p class="panel-sub">SIP ALG management for 3CX and similar PBX deployments.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title">SIP debug</div></div>
+    <div class="card-body no-pad">
+      <div class="code-wrap">
+        <button class="copy-btn" data-copy-text="diagnose debug disable
+diagnose debug reset
+diagnose debug application sip -1
+diagnose debug enable"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+        <pre class="code-block">diagnose debug disable
+diagnose debug reset
+diagnose debug application sip -1
+diagnose debug enable</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title">SIP ALG session status</div></div>
+    <div class="card-body no-pad">
+      <div class="code-wrap">
+        <button class="copy-btn" data-copy-text="diagnose sys sip-proxy calls list
+diagnose sys sip-proxy stats list
+diagnose sys sip-proxy stats clear
+diagnose sys sip status
+diagnose sys sip dialog list
+diagnose sys sip mapping list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+        <pre class="code-block">diagnose sys sip-proxy calls list
+diagnose sys sip-proxy stats list
+diagnose sys sip-proxy stats clear
+diagnose sys sip status
+diagnose sys sip dialog list
+diagnose sys sip mapping list</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Remove SIP ALG (kernel-helper based — recommended for 3CX)</div>
+      <span class="card-tag">3CX preset</span>
+    </div>
+    <div class="card-body no-pad">
+      <div class="code-wrap">
+        <button class="copy-btn" data-copy-text="config system settings
+    set default-voip-alg-mode kernel-helper-based
+    set sip-expectation disable
+    set sip-nat-trace disable
+end
+
+config system session-helper
+    delete 13
+end
+
+# Clear all sessions and restart the PBX server afterwards."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+        <pre class="code-block">config system settings
+    set default-voip-alg-mode kernel-helper-based
+    set sip-expectation disable
+    set sip-nat-trace disable
+end
+
+config system session-helper
+    delete 13
+end
+
+# Clear all sessions and restart the PBX server afterwards.</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">3CX / Bluerock / WPW preferred settings</div>
+      <span class="card-tag">3CX preset</span>
+    </div>
+    <div class="card-body no-pad">
+      <div class="code-wrap">
+        <button class="copy-btn" data-copy-text="config system settings
+    set default-voip-alg-mode kernel-helper-based
+    set sip-nat-trace disable
+    set gui-voip-profile enable
+    set gui-security-profile-group enable
+end
+
+config system session-helper
+    delete 13
+end"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+        <pre class="code-block">config system settings
+    set default-voip-alg-mode kernel-helper-based
+    set sip-nat-trace disable
+    set gui-voip-profile enable
+    set gui-security-profile-group enable
+end
+
+config system session-helper
+    delete 13
+end</pre>
+      </div>
+    </div>
+  </div>
+
+  <details class="collapse">
+    <summary>Restore SIP ALG to factory defaults</summary>
+    <div class="collapse-body">
+      <div class="code-wrap">
+        <button class="copy-btn" data-copy-text="config system settings
+    unset default-voip-alg-mode
+    unset sip-nat-trace
+end
+
+config system session-helper
+    edit 13
+        set name sip
+        set protocol 17
+        set port 5060
+    next
+end"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+        <pre class="code-block">config system settings
+    unset default-voip-alg-mode
+    unset sip-nat-trace
+end
+
+config system session-helper
+    edit 13
+        set name sip
+        set protocol 17
+        set port 5060
+    next
+end</pre>
+      </div>
+    </div>
+  </details>
+</section>
+
+<!-- ============================================================
+     ARCHIVE
+============================================================ -->
+<section class="panel" data-panel="archive">
+  <div class="panel-header">
+    <h1 class="panel-title">Concepts</h1>
+    <p class="panel-sub">Background knowledge and reference material. More entries to come.</p>
+  </div>
+
+  <details class="collapse">
+    <summary>VXLAN</summary>
+    <div class="collapse-body">
+      <p><strong>What is VXLAN?</strong></p>
+      <p>VXLAN (Virtual eXtensible LAN) is a way to carry a Layer 2 Ethernet network over a Layer 3 IP network. In simple terms, it lets you take an Ethernet frame from one switch or server, wrap it, send it across a routed network, and unwrap it at the other end. RFC 7348 describes it as a Layer 2 overlay scheme on a Layer 3 network.</p>
+
+      <p style="margin-top:14px;"><strong>How it works</strong></p>
+      <p>VXLAN encapsulates the original Ethernet frame inside:</p>
+      <ul>
+        <li>Outer Ethernet</li>
+        <li>Outer IP</li>
+        <li>Outer UDP</li>
+        <li>VXLAN header</li>
+      </ul>
+      <p>So VXLAN is basically a Layer 2 overlay over a Layer 3 underlay. The standard VXLAN header is 8 bytes, and the VNI is a 24-bit field inside that header. VXLAN runs over UDP with IANA-assigned destination port <code>4789</code>.</p>
+
+      <p style="margin-top:14px;"><strong>Why VXLAN is used</strong></p>
+      <ul>
+        <li>Traditional VLANs are limited to 4094 IDs</li>
+        <li>Large Layer 2 domains do not scale well</li>
+        <li>It allows Layer 2 extension across routed networks</li>
+        <li>It provides much larger segmentation using VNI (24 bits, around 16 million segments)</li>
+        <li>Commonly used in datacentres and EVPN fabrics</li>
+      </ul>
+
+      <p style="margin-top:14px;"><strong>VLAN vs VXLAN</strong></p>
+      <ul>
+        <li>VLAN = local Layer 2 segmentation</li>
+        <li>VXLAN = Layer 2 overlay carried across Layer 3</li>
+        <li>VLAN ID = 12 bits</li>
+        <li>VNI = 24 bits</li>
+      </ul>
+      <p>A VLAN and a VNI can be mapped, for example <code>VLAN 20 -&gt; VNI 10020</code>, but they are not the same field.</p>
+
+      <p style="margin-top:14px;"><strong>VXLAN packet structure</strong></p>
+      <p>A VXLAN packet wraps an original Ethernet frame inside:</p>
+      <div class="code-wrap">
+        <pre class="code-block">Outer Ethernet + Outer IP + Outer UDP + VXLAN header + Inner Ethernet frame</pre>
+      </div>
+
+      <p style="margin-top:14px;"><strong>VXLAN header (8 bytes)</strong></p>
+      <ul>
+        <li>Flags: 8 bits</li>
+        <li>Reserved: 24 bits</li>
+        <li>VNI: 24 bits</li>
+        <li>Reserved: 8 bits</li>
+      </ul>
+      <p>The VNI lives inside the VXLAN header, not inside the 802.1Q VLAN tag.</p>
+
+      <div class="code-wrap">
+        <pre class="code-block"> 0                  7 8                 15 16                23 24                31
++--------------------+--------------------+--------------------+--------------------+
+|       Flags        |                           Reserved                           |
++--------------------+--------------------+--------------------+--------------------+
+|                        VNI (24 bits)                         |      Reserved      |
++--------------------+--------------------+--------------------+--------------------+</pre>
+      </div>
+
+      <p style="margin-top:14px;"><strong>Encapsulation overhead</strong></p>
+      <p>VXLAN over IPv4 = <strong>50 bytes</strong> total:</p>
+      <ul>
+        <li>Outer Ethernet = 14 bytes</li>
+        <li>Outer IPv4 = 20 bytes</li>
+        <li>Outer UDP = 8 bytes</li>
+        <li>VXLAN header = 8 bytes</li>
+      </ul>
+      <p>VXLAN over IPv6 = <strong>70 bytes</strong> total:</p>
+      <ul>
+        <li>Outer Ethernet = 14 bytes</li>
+        <li>Outer IPv6 = 40 bytes</li>
+        <li>Outer UDP = 8 bytes</li>
+        <li>VXLAN header = 8 bytes</li>
+      </ul>
+
+      <p style="margin-top:14px;"><strong>Why UDP and not TCP?</strong></p>
+      <ul>
+        <li>Lightweight</li>
+        <li>Avoids TCP overhead and session handling</li>
+        <li>Allows ECMP and load-balancing using UDP source-port entropy</li>
+      </ul>
+      <p>Standard VXLAN uses UDP destination port <code>4789</code>.</p>
+
+      <p style="margin-top:14px;"><strong>Mental model</strong></p>
+      <ul>
+        <li>802.1Q VLAN tag = sticker on the Ethernet frame</li>
+        <li>VXLAN header = wrapper around the whole frame</li>
+        <li>VNI = label on that wrapper</li>
+      </ul>
+
+      <p style="margin-top:14px;"><strong>One-line summary</strong></p>
+      <p>VXLAN is a Layer 2 overlay over a Layer 3 IP network that encapsulates Ethernet frames using UDP and identifies segments using a 24-bit VNI.</p>
+    </div>
+  </details>
+
+  <details class="collapse">
+    <summary>802.1X (PEAP-MSCHAPv2)</summary>
+    <div class="collapse-body">
+      <p><strong>Core concept</strong></p>
+      <p>One SSID, multiple VLANs. Users land in different VLANs based on AD group membership. The decision is made at the RADIUS server, not the AP, not AD, not the device.</p>
+
+      <p style="margin-top:14px;"><strong>Component responsibilities</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Layer</th><th>Owns</th><th>Knows about</th></tr></thead>
+          <tbody>
+            <tr><td>AD</td><td>Users, passwords, group memberships</td><td>Identity only. No VLAN awareness</td></tr>
+            <tr><td>NPS (Microsoft RADIUS)</td><td>Network Policies, tunnel attributes</td><td>Identity to tunnel-string mapping</td></tr>
+            <tr><td>AP / WLC / controller (vendor-specific)</td><td>VLAN Assignment Rules</td><td>Tunnel-string to VLAN mapping</td></tr>
+            <tr><td>Switch / DHCP</td><td>VLANs, subnets, scopes</td><td>The actual L2/L3 plumbing</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:10px;">NPS is Microsoft's RADIUS server product. RADIUS is the protocol. Same server, two names.</p>
+
+      <p style="margin-top:14px;"><strong>Where the tunnel / VLAN decision lives</strong></p>
+      <ul>
+        <li>Not on the AD user object</li>
+        <li>Not in a GPO</li>
+        <li>Not on the AP</li>
+        <li>Lives in the NPS Network Policy, hardcoded as a string by the network admin</li>
+        <li>Sent only in the Access-Accept reply, never in the request</li>
+      </ul>
+
+      <p style="margin-top:14px;"><strong>RADIUS message codes - Authentication (UDP 1812)</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Code</th><th>Message</th><th>Direction</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>Access-Request</td><td>NAS to RADIUS</td><td>Here are credentials, please authenticate</td></tr>
+            <tr><td>2</td><td>Access-Accept</td><td>RADIUS to NAS</td><td>Yes, authenticated, here are the attributes</td></tr>
+            <tr><td>3</td><td>Access-Reject</td><td>RADIUS to NAS</td><td>No, denied</td></tr>
+            <tr><td>11</td><td>Access-Challenge</td><td>RADIUS to NAS</td><td>I need more info, send next EAP message</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="margin-top:14px;"><strong>RADIUS message codes - Accounting (UDP 1813)</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Code</th><th>Message</th><th>Direction</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>4</td><td>Accounting-Request</td><td>NAS to RADIUS</td><td>User session started, updated, or ended. Log it</td></tr>
+            <tr><td>5</td><td>Accounting-Response</td><td>RADIUS to NAS</td><td>Logged, acknowledged</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="margin-top:14px;"><strong>Acct-Status-Type values</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Value</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>Start - session began</td></tr>
+            <tr><td>2</td><td>Stop - session ended</td></tr>
+            <tr><td>3</td><td>Interim-Update - periodic heartbeat</td></tr>
+            <tr><td>7</td><td>Accounting-On - NAS booted</td></tr>
+            <tr><td>8</td><td>Accounting-Off - NAS shutting down</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="margin-top:14px;"><strong>Key RADIUS attributes for VLAN assignment</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Attribute</th><th>Number</th><th>Type</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td>Tunnel-Type</td><td>64</td><td>Integer</td><td>13 (VLAN)</td></tr>
+            <tr><td>Tunnel-Medium-Type</td><td>65</td><td>Integer</td><td>6 (IEEE-802)</td></tr>
+            <tr><td>Tunnel-Private-Group-ID</td><td>81</td><td>String</td><td>VLAN ID, e.g. <code>520</code></td></tr>
+            <tr><td>Tunnel-Assignment-Id</td><td>82</td><td>String</td><td>Freeform tag, e.g. <code>520</code> or <code>staff-corp</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:10px;">Aruba Instant typically uses attribute 82. Cisco WLC typically uses attribute 81. Both achieve the same outcome.</p>
+
+      <p style="margin-top:14px;"><strong>End-to-end auth flow (PEAP-MSCHAPv2)</strong></p>
+      <ol>
+        <li>User connects to SSID, supplicant sends credentials</li>
+        <li>AP wraps credentials in Access-Request (code 1) to NPS on UDP 1812</li>
+        <li>NPS replies with Access-Challenge (code 11) to start TLS handshake</li>
+        <li>Multiple Request and Challenge round trips negotiate TLS tunnel (cert exchange, key derivation)</li>
+        <li>Supplicant sends MSCHAPv2 credentials inside the encrypted TLS tunnel</li>
+        <li>NPS validates the MSCHAPv2 challenge/response against AD via the Netlogon Secure Channel to a domain controller</li>
+        <li>NPS queries AD via LDAP for group memberships</li>
+        <li>NPS walks Network Policies top to bottom, first match wins</li>
+        <li>Matched policy injects tunnel attributes into reply</li>
+        <li>NPS sends Access-Accept (code 2) with Tunnel-Type, Tunnel-Medium-Type, Tunnel-Assignment-Id, MS-MPPE keys</li>
+        <li>AP reads Tunnel-Assignment-Id, matches its VLAN Assignment Rule, bridges client into assigned VLAN</li>
+        <li>AP uses MS-MPPE keys to derive PMK for WPA2 4-way handshake</li>
+        <li>Client gets DHCP from the assigned VLAN's scope</li>
+        <li>AP sends Accounting-Request Start (code 4) on UDP 1813</li>
+        <li>NPS replies Accounting-Response (code 5)</li>
+        <li>Periodic Interim-Updates throughout session, Stop on disconnect</li>
+      </ol>
+
+      <p style="margin-top:14px;"><strong>Critical truth about the request packet</strong></p>
+      <p>The Access-Request does NOT contain a VLAN or tunnel ID. It carries only:</p>
+      <ul>
+        <li>User-Name</li>
+        <li>EAP-Message - carries the EAP payload (outer plaintext, inner encrypted once TLS is up)</li>
+        <li>NAS-IP-Address, NAS-Identifier</li>
+        <li>Called-Station-Id (AP BSSID + SSID)</li>
+        <li>Calling-Station-Id (client MAC)</li>
+        <li>NAS-Port-Type (Wireless-802.11)</li>
+      </ul>
+      <p>The tunnel attributes only appear on the return leg (Access-Accept), generated by NPS based on policy match.</p>
+
+      <p style="margin-top:14px;"><strong>RADIUS packet structure</strong></p>
+      <div class="code-wrap">
+        <pre class="code-block">+--------+--------+----------------+--------------------+----------+
+| Code   | ID     | Length         | Authenticator      | Attribs  |
+| 1 byte | 1 byte | 2 bytes        | 16 bytes           | variable |
++--------+--------+----------------+--------------------+----------+</pre>
+      </div>
+      <p style="margin-top:10px;">ID pairs requests with replies. The Authenticator field plus the Message-Authenticator attribute (80, HMAC-MD5 over the packet using the shared secret) provide integrity. Message-Authenticator is mandatory when EAP is in use.</p>
+
+      <p style="margin-top:14px;"><strong>Onboarding workflow for new user category</strong></p>
+      <p>One-time setup (network team):</p>
+      <ol>
+        <li>Create NPS Network Policy with condition: User Groups contains X</li>
+        <li>Set RADIUS attributes: Tunnel-Type=VLAN, Tunnel-Medium-Type=802, Tunnel-Assignment-Id=N</li>
+        <li>Create AP VLAN Assignment Rule: if Tunnel-Assignment-Id equals N then bridge VLAN N</li>
+        <li>Ensure VLAN N exists on switch, has DHCP scope, has SVI / gateway</li>
+      </ol>
+      <p>Per user (systems team):</p>
+      <ol>
+        <li>Create user in AD</li>
+        <li>Add to the appropriate AD group</li>
+      </ol>
+      <p>That is it. AD touches identity only. NPS holds the policy. AP holds the rule.</p>
+
+      <p style="margin-top:14px;"><strong>Common NPS gotcha</strong></p>
+      <p>On the policy Overview tab, the "Access permission" radio must be set to "Grant access". You can have perfect Conditions, Constraints, and Settings and the policy will still deny if this is wrong. Catches everyone exactly once.</p>
+
+      <p style="margin-top:14px;"><strong>Related concepts</strong></p>
+      <ul>
+        <li><strong>MAB (MAC Authentication Bypass)</strong> - fallback for devices that don't speak 802.1X (printers, IoT, badge readers). Same RADIUS server, different policy that matches on Calling-Station-Id (MAC) instead of EAP.</li>
+        <li><strong>CoA (Change of Authorization)</strong> - RFC 5176, UDP 3799. Lets NPS push session changes (force re-auth, terminate, bounce port) without the client reconnecting. Useful for posture, quarantine, role changes.</li>
+        <li><strong>EAP type variants</strong> - EAP-TLS (cert both sides, no passwords), EAP-TTLS (server cert + inner whatever), PEAP-MSCHAPv2 (server cert + inner password, the variant this doc covers). The outer wrapper changes, the RADIUS plumbing is identical.</li>
+      </ul>
+
+      <p style="margin-top:14px;"><strong>Debug cheat sheet</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Symptom</th><th>Likely cause</th><th>Where to look</th></tr></thead>
+          <tbody>
+            <tr><td>No reply from NPS</td><td>UDP 1812 blocked or wrong shared secret</td><td>Firewall, NPS RADIUS client config</td></tr>
+            <tr><td>Access-Reject with no reason</td><td>Wrong shared secret or AP not registered as RADIUS client</td><td>NPS Event Viewer event 6273</td></tr>
+            <tr><td>Many Challenges then Reject</td><td>Cert validation failure</td><td>NPS cert trust chain, client trust store</td></tr>
+            <tr><td>Auth succeeds, wrong VLAN</td><td>Wrong Tunnel-Assignment-Id value or no AP rule match</td><td>NPS policy attributes, AP rule list</td></tr>
+            <tr><td>Session drops at fixed interval</td><td>Session-Timeout reauth failing</td><td>Look for reauth attempt in capture</td></tr>
+            <tr><td>Auth works, no accounting</td><td>UDP 1813 blocked or NAS not configured for accounting</td><td>Firewall, NPS accounting client config</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="margin-top:14px;"><strong>Capture and log sources</strong></p>
+      <ul>
+        <li>Wireshark on NPS NIC - cleanest view of all RADIUS traffic, filter: <code>radius</code></li>
+        <li>NPS Event Viewer - Custom Views &gt; Server Roles &gt; Network Policy and Access Services. Event 6272 = granted, 6273 = denied. Shows matched policy name and reason</li>
+        <li>NPS log files - <code>%SystemRoot%\System32\LogFiles\</code> in IAS format</li>
+        <li>SPAN or mirror on AP uplink - if NPS access not available</li>
+      </ul>
+      <p>Combine packet capture (what flew on the wire) with NPS event log (which policy NPS picked and why) for full diagnosis.</p>
+
+      <p style="margin-top:14px;"><strong>Reference values</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Item</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td>RADIUS auth port</td><td>UDP 1812 (old: 1645)</td></tr>
+            <tr><td>RADIUS accounting port</td><td>UDP 1813 (old: 1646)</td></tr>
+            <tr><td>CoA port</td><td>UDP 3799</td></tr>
+            <tr><td>Tunnel-Type for VLAN</td><td>13</td></tr>
+            <tr><td>Tunnel-Medium-Type for IEEE-802</td><td>6</td></tr>
+            <tr><td>NAS-Port-Type for wireless</td><td>19</td></tr>
+            <tr><td>RFC for protocol</td><td>2865 (auth), 2866 (accounting)</td></tr>
+            <tr><td>RFC for tunnel attributes</td><td>2868</td></tr>
+            <tr><td>RFC for CoA</td><td>5176</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </details>
+
+  <details class="collapse">
+    <summary>TCP/IP</summary>
+    <div class="collapse-body">
+      <p><strong>Scope</strong></p>
+      <p>Deep reference for packet capture analysis, MTU/MSS sizing, and troubleshooting transport-layer issues. Covers IPv4, IPv6, TCP, UDP at the byte level. The diagrams below follow standard RFC bit-position notation: each character pair represents one bit, bits 0-31 left to right, MSB first.</p>
+
+      <p style="margin-top:14px;"><strong>IPv4 header (RFC 791, 20 bytes minimum, up to 60 with options)</strong></p>
+      <div class="code-wrap">
+        <pre class="code-block"> 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|Version|  IHL  |   DSCP    |ECN|         Total Length          |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|        Identification         |Flags|     Fragment Offset     |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|      TTL      |   Protocol    |        Header Checksum        |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                        Source Address                         |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                      Destination Address                      |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|             Options (if IHL &gt; 5)              |    Padding    |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</pre>
+      </div>
+
+      <div class="table-wrap" style="margin-top:10px;">
+        <table>
+          <thead><tr><th>Field</th><th>Bits</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>Version</td><td>4</td><td>Always 4 for IPv4</td></tr>
+            <tr><td>IHL (Internet Header Length)</td><td>4</td><td>In 32-bit words. Min 5 (=20 bytes), max 15 (=60 bytes)</td></tr>
+            <tr><td>DSCP</td><td>6</td><td>QoS class. EF=46 (voice), AF41=34, CS6=48 (routing), etc.</td></tr>
+            <tr><td>ECN</td><td>2</td><td>Explicit Congestion Notification. 00=not-ECT, 11=CE (congestion)</td></tr>
+            <tr><td>Total Length</td><td>16</td><td>Header + data, in bytes. Max 65535</td></tr>
+            <tr><td>Identification</td><td>16</td><td>Fragment reassembly key</td></tr>
+            <tr><td>Flags</td><td>3</td><td>bit0=Reserved (0), bit1=DF (Don't Fragment), bit2=MF (More Fragments)</td></tr>
+            <tr><td>Fragment Offset</td><td>13</td><td>In 8-byte units, offset of this fragment in the original packet</td></tr>
+            <tr><td>TTL</td><td>8</td><td>Hop count. Decremented at each router. 0 = drop + ICMP Time Exceeded</td></tr>
+            <tr><td>Protocol</td><td>8</td><td>Next-layer protocol (see protocol numbers table below)</td></tr>
+            <tr><td>Header Checksum</td><td>16</td><td>Header only, not payload. Recomputed at every hop (TTL changes)</td></tr>
+            <tr><td>Source / Destination</td><td>32 each</td><td>IPv4 addresses</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="margin-top:14px;"><strong>IPv4 fragmentation flags - what to look for in pcap</strong></p>
+      <ul>
+        <li><strong>DF set, MF clear</strong> - normal unfragmented packet. If too big for an MTU on path, gets dropped with ICMP Type 3 Code 4 (Fragmentation Needed). This is how PMTU Discovery works.</li>
+        <li><strong>DF clear, MF set</strong> - this is a fragment, more to come</li>
+        <li><strong>DF clear, MF clear, Fragment Offset &gt; 0</strong> - this is the LAST fragment</li>
+        <li><strong>DF set, MF set</strong> - illegal combination, indicates a broken sender or malicious packet</li>
+      </ul>
+
+      <p style="margin-top:14px;"><strong>IPv6 header (RFC 8200, fixed 40 bytes)</strong></p>
+      <div class="code-wrap">
+        <pre class="code-block"> 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|Version| Traffic Class |              Flow Label               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|        Payload Length         |  Next Header  |   Hop Limit   |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
++                                                               +
+|                                                               |
++                                                               +
+|                   Source Address (128 bits)                   |
++                                                               +
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
++                                                               +
+|                                                               |
++                                                               +
+|                Destination Address (128 bits)                 |
++                                                               +
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</pre>
+      </div>
+
+      <p style="margin-top:14px;"><strong>Key differences from IPv4</strong></p>
+      <ul>
+        <li><strong>Fixed 40-byte header</strong> - no IHL field, no options inside the header. Options go in extension headers (Hop-by-Hop, Routing, Fragment, AH, ESP, etc.) chained via Next Header.</li>
+        <li><strong>No header checksum</strong> - relies on L2 (Ethernet FCS) and L4 (TCP/UDP checksum). Routers don't have to recompute anything per hop.</li>
+        <li><strong>No router-level fragmentation</strong> - only the source can fragment, via the Fragment extension header. Path MTU Discovery is effectively mandatory.</li>
+        <li><strong>Hop Limit replaces TTL</strong> - same function, more honest name.</li>
+        <li><strong>Next Header replaces Protocol</strong> - same numbering scheme, but can point to an extension header rather than directly to L4.</li>
+        <li><strong>Flow Label (20 bits)</strong> - for ECMP hashing and QoS. Rarely populated by endpoints today.</li>
+      </ul>
+
+      <p style="margin-top:14px;"><strong>Common protocol numbers (IPv4 Protocol / IPv6 Next Header)</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Number</th><th>Protocol</th><th>Where you'll see it</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>ICMP</td><td>ping, traceroute, PMTU discovery</td></tr>
+            <tr><td>2</td><td>IGMP</td><td>multicast group membership</td></tr>
+            <tr><td>6</td><td>TCP</td><td>most things</td></tr>
+            <tr><td>17</td><td>UDP</td><td>DNS, DHCP, VXLAN, RADIUS, IPsec NAT-T</td></tr>
+            <tr><td>41</td><td>IPv6-in-IPv4</td><td>6in4, 6to4 tunnels</td></tr>
+            <tr><td>47</td><td>GRE</td><td>Generic Routing Encapsulation</td></tr>
+            <tr><td>50</td><td>ESP</td><td>IPsec encrypted payload</td></tr>
+            <tr><td>51</td><td>AH</td><td>IPsec auth header (rare today)</td></tr>
+            <tr><td>58</td><td>ICMPv6</td><td>v6 ping, ND, RA, PMTU</td></tr>
+            <tr><td>88</td><td>EIGRP</td><td>Cisco IGP</td></tr>
+            <tr><td>89</td><td>OSPF</td><td>OSPFv2/v3 hello and LSA</td></tr>
+            <tr><td>112</td><td>VRRP / CARP</td><td>FortiGate HA, virtual router redundancy</td></tr>
+            <tr><td>132</td><td>SCTP</td><td>signalling, some telco</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="margin-top:14px;"><strong>TCP header (RFC 9293, 20 bytes minimum, up to 60 with options)</strong></p>
+      <div class="code-wrap">
+        <pre class="code-block"> 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|          Source Port          |       Destination Port        |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                        Sequence Number                        |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                     Acknowledgment Number                     |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|Data Of| Rsvd  |C|E|U|A|P|R|S|F|          Window Size          |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|           Checksum            |        Urgent Pointer         |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|         Options (if Data Offset &gt; 5)          |    Padding    |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</pre>
+      </div>
+
+      <div class="table-wrap" style="margin-top:10px;">
+        <table>
+          <thead><tr><th>Field</th><th>Bits</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>Source / Destination Port</td><td>16 each</td><td>0-65535</td></tr>
+            <tr><td>Sequence Number</td><td>32</td><td>Byte position in the stream. Wraps at 2^32</td></tr>
+            <tr><td>Acknowledgment Number</td><td>32</td><td>Next sequence number expected. Only meaningful if ACK flag set</td></tr>
+            <tr><td>Data Offset</td><td>4</td><td>Header length in 32-bit words. Min 5, max 15</td></tr>
+            <tr><td>Reserved</td><td>4</td><td>Must be zero (was 3+NS, NS was deprecated by RFC 9293)</td></tr>
+            <tr><td>Control bits (flags)</td><td>8</td><td>CWR, ECE, URG, ACK, PSH, RST, SYN, FIN (see table below)</td></tr>
+            <tr><td>Window Size</td><td>16</td><td>Receive buffer space available, in bytes. Scaled if Window Scale option negotiated in SYN</td></tr>
+            <tr><td>Checksum</td><td>16</td><td>Over pseudo-header + TCP header + data</td></tr>
+            <tr><td>Urgent Pointer</td><td>16</td><td>Only valid if URG set. Rarely used today</td></tr>
+            <tr><td>Options</td><td>0-320</td><td>MSS, Window Scale, SACK Permitted, Timestamps, etc.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="margin-top:14px;"><strong>TCP control bits (flags)</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Bit</th><th>Hex</th><th>Flag</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>0 (MSB)</td><td><code>0x80</code></td><td>CWR</td><td>Congestion Window Reduced (ECN response)</td></tr>
+            <tr><td>1</td><td><code>0x40</code></td><td>ECE</td><td>ECN-Echo (peer experienced congestion)</td></tr>
+            <tr><td>2</td><td><code>0x20</code></td><td>URG</td><td>Urgent Pointer field is significant</td></tr>
+            <tr><td>3</td><td><code>0x10</code></td><td>ACK</td><td>Acknowledgment field is significant</td></tr>
+            <tr><td>4</td><td><code>0x08</code></td><td>PSH</td><td>Push buffered data to receiving application now</td></tr>
+            <tr><td>5</td><td><code>0x04</code></td><td>RST</td><td>Reset the connection (abort)</td></tr>
+            <tr><td>6</td><td><code>0x02</code></td><td>SYN</td><td>Synchronize sequence numbers (connection setup)</td></tr>
+            <tr><td>7 (LSB)</td><td><code>0x01</code></td><td>FIN</td><td>No more data from sender (graceful close)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="margin-top:14px;"><strong>Common flag combinations seen in captures</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Combo</th><th>Hex</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td>SYN</td><td><code>0x02</code></td><td>Client opening connection</td></tr>
+            <tr><td>SYN + ACK</td><td><code>0x12</code></td><td>Server accepting connection</td></tr>
+            <tr><td>ACK</td><td><code>0x10</code></td><td>Data acknowledgment, no data this segment</td></tr>
+            <tr><td>PSH + ACK</td><td><code>0x18</code></td><td>Data carrying segment, deliver to app immediately</td></tr>
+            <tr><td>FIN + ACK</td><td><code>0x11</code></td><td>Graceful close, half-shutdown</td></tr>
+            <tr><td>RST</td><td><code>0x04</code></td><td>Hard abort, no negotiation (often used by firewalls)</td></tr>
+            <tr><td>RST + ACK</td><td><code>0x14</code></td><td>Hard abort in response to data on a dead connection</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="margin-top:14px;"><strong>TCP connection states (RFC 9293)</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>State</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td>CLOSED</td><td>No connection. Fictional starting state</td></tr>
+            <tr><td>LISTEN</td><td>Server waiting for an incoming SYN</td></tr>
+            <tr><td>SYN-SENT</td><td>Client sent SYN, waiting for SYN+ACK</td></tr>
+            <tr><td>SYN-RECEIVED</td><td>Server got SYN, sent SYN+ACK, waiting for ACK</td></tr>
+            <tr><td>ESTABLISHED</td><td>Connection open, data can flow both ways</td></tr>
+            <tr><td>FIN-WAIT-1</td><td>Sent FIN, waiting for ACK or peer's FIN</td></tr>
+            <tr><td>FIN-WAIT-2</td><td>Our FIN was ACKed, waiting for peer's FIN</td></tr>
+            <tr><td>CLOSE-WAIT</td><td>Peer sent FIN, we ACKed it. Waiting for local app to call close()</td></tr>
+            <tr><td>CLOSING</td><td>Simultaneous close - both sides sent FIN before ACKs arrived</td></tr>
+            <tr><td>LAST-ACK</td><td>Sent our FIN (passive close), waiting for final ACK from peer</td></tr>
+            <tr><td>TIME-WAIT</td><td>Active closer waits 2*MSL after sending final ACK, to absorb stragglers</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="margin-top:14px;"><strong>Normal 3-way handshake</strong></p>
+      <div class="code-wrap">
+        <pre class="code-block">Client                                Server
+------                                ------
+CLOSED                                LISTEN
+   |                                    |
+   |---- SYN  (seq=x)             ----&gt;|
+SYN-SENT                                |
+   |                                    |
+   |&lt;--- SYN+ACK (seq=y, ack=x+1) -----|
+   |                              SYN-RECEIVED
+   |                                    |
+   |---- ACK  (seq=x+1, ack=y+1) -----&gt;|
+ESTABLISHED                          ESTABLISHED</pre>
+      </div>
+
+      <p style="margin-top:14px;"><strong>Normal 4-way close (active vs passive)</strong></p>
+      <div class="code-wrap">
+        <pre class="code-block">Active closer                         Passive closer
+-------------                         --------------
+ESTABLISHED                           ESTABLISHED
+   |                                    |
+   |---- FIN, ACK                ----&gt;|
+FIN-WAIT-1                              |
+   |                                    |
+   |&lt;--- ACK                     -----|
+FIN-WAIT-2                           CLOSE-WAIT
+   |                                    |
+   |                              (app calls close)
+   |                                    |
+   |&lt;--- FIN, ACK                -----|
+   |                                LAST-ACK
+   |                                    |
+   |---- ACK                     ----&gt;|
+TIME-WAIT                            CLOSED
+   |
+   |  (wait 2*MSL)
+   |
+CLOSED</pre>
+      </div>
+
+      <p style="margin-top:14px;"><strong>TIME-WAIT and 2*MSL - what every senior engineer should know</strong></p>
+      <ul>
+        <li>The side that sends FIN first is the <strong>active closer</strong> and ends up in TIME-WAIT.</li>
+        <li>RFC says wait <code>2 * MSL</code> (Maximum Segment Lifetime). RFC suggests MSL = 2 minutes, so 2*MSL = 4 minutes default.</li>
+        <li><strong>Linux:</strong> hardcoded at 60 seconds, not configurable (kernel constant <code>TCP_TIMEWAIT_LEN</code>).</li>
+        <li><strong>Windows:</strong> registry <code>TcpTimedWaitDelay</code>, default 240s, range 30-300s.</li>
+        <li><strong>Why it exists:</strong> absorb delayed segments from this connection so they don't pollute a new connection on the same 4-tuple, and ensure the peer's FIN gets retransmitted and ACKed if the final ACK was lost.</li>
+        <li><strong>Symptom of exhaustion:</strong> "Address already in use" when restarting a server on a well-known port. Or ephemeral port exhaustion on a busy client (HTTP load test, monitoring poller).</li>
+        <li><strong>Linux tunables:</strong> <code>net.ipv4.tcp_tw_reuse=1</code> (safe to enable, reuses TIME-WAIT for outgoing). <code>tcp_tw_recycle</code> was removed in 4.12 (NAT-hostile, do not look for it).</li>
+        <li>Quick check on Linux: <code>ss -tan state time-wait | wc -l</code></li>
+      </ul>
+
+      <p style="margin-top:14px;"><strong>UDP header (RFC 768, fixed 8 bytes)</strong></p>
+      <div class="code-wrap">
+        <pre class="code-block"> 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|          Source Port          |       Destination Port        |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|            Length             |           Checksum            |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</pre>
+      </div>
+      <ul>
+        <li><strong>Length</strong> covers header + data (so minimum 8).</li>
+        <li><strong>Checksum</strong> is optional in IPv4 (set to 0 to skip), mandatory in IPv6.</li>
+        <li>No sequence numbers, no flow control, no retransmission. Anything above that lives in the application protocol (QUIC, DNS, RTP, etc.).</li>
+      </ul>
+
+      <p style="margin-top:14px;"><strong>MTU / MSS math reference</strong></p>
+      <p>Standard Ethernet MTU is 1500 bytes (payload after Ethernet header). MSS is negotiated in the SYN/SYN-ACK Options field and is what TCP advertises as its max segment size.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Path type</th><th>Headers consumed</th><th>Effective MSS</th></tr></thead>
+          <tbody>
+            <tr><td>Plain TCP over IPv4</td><td>20 IPv4 + 20 TCP = 40</td><td>1460</td></tr>
+            <tr><td>Plain TCP over IPv6</td><td>40 IPv6 + 20 TCP = 60</td><td>1440</td></tr>
+            <tr><td>TCP in PPPoE (DSL, FTTN)</td><td>40 + 8 PPPoE = 48</td><td>1452</td></tr>
+            <tr><td>TCP in GRE</td><td>40 + 24 GRE = 64</td><td>1436</td></tr>
+            <tr><td>TCP in IPsec ESP (tunnel mode, AES-GCM)</td><td>~40 + 50-60 ESP overhead</td><td>~1380-1400</td></tr>
+            <tr><td>TCP in VXLAN over IPv4</td><td>40 + 50 VXLAN = 90</td><td>1410</td></tr>
+            <tr><td>TCP in VXLAN over IPv6</td><td>60 + 70 VXLAN = 130</td><td>1370</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:10px;">FortiGate tip: <code>set tcp-mss-sender</code> and <code>set tcp-mss-receiver</code> on the firewall policy or interface clamp the MSS in transit. Common for VPN paths where PMTU is unreliable.</p>
+
+      <p style="margin-top:14px;"><strong>Path MTU Discovery (PMTUD) - how it breaks</strong></p>
+      <ul>
+        <li>Sender sets DF flag. Router along path with smaller MTU drops the packet and returns <strong>ICMP Type 3 Code 4</strong> (Fragmentation Needed, DF Set) with the next-hop MTU.</li>
+        <li>Sender caches the new MTU per destination and reduces segment size.</li>
+        <li><strong>Common breakage:</strong> firewall along path drops ICMP unreachable. Sender keeps retransmitting full-size DF-set packets, application hangs after the SYN works fine but data stalls. Classic "small requests work, large ones don't" symptom.</li>
+        <li>Workaround: MSS clamping at the tunnel ingress (see FortiGate tip above), or set DF=0 to allow router fragmentation (IPv4 only, slow).</li>
+      </ul>
+
+      <p style="margin-top:14px;"><strong>Wireshark display filters - deep troubleshooting picks</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Filter</th><th>What it catches</th></tr></thead>
+          <tbody>
+            <tr><td><code>tcp.flags.syn == 1 and tcp.flags.ack == 0</code></td><td>Connection attempts (SYN only)</td></tr>
+            <tr><td><code>tcp.flags.reset == 1</code></td><td>RST packets - who killed the connection</td></tr>
+            <tr><td><code>tcp.analysis.retransmission</code></td><td>Wireshark-detected retransmits (loss indicator)</td></tr>
+            <tr><td><code>tcp.analysis.fast_retransmission</code></td><td>Triggered by 3 duplicate ACKs</td></tr>
+            <tr><td><code>tcp.analysis.duplicate_ack</code></td><td>Dup ACKs - receiver telling sender it's missing data</td></tr>
+            <tr><td><code>tcp.analysis.zero_window</code></td><td>Receiver buffer full - application not draining</td></tr>
+            <tr><td><code>tcp.analysis.window_full</code></td><td>Sender has filled the peer's window</td></tr>
+            <tr><td><code>tcp.analysis.out_of_order</code></td><td>Packets arriving out of sequence</td></tr>
+            <tr><td><code>tcp.analysis.lost_segment</code></td><td>Wireshark sees a gap in sequence numbers</td></tr>
+            <tr><td><code>tcp.stream eq N</code></td><td>Isolate one specific TCP conversation</td></tr>
+            <tr><td><code>tcp.window_size == 0</code></td><td>Same as zero_window but the raw field</td></tr>
+            <tr><td><code>ip.ttl &lt; 5</code></td><td>Low TTL - either looping or near end-of-life</td></tr>
+            <tr><td><code>ip.flags.df == 1 and ip.len &gt; 1400</code></td><td>Large DF-set packets - PMTU candidates</td></tr>
+            <tr><td><code>icmp.type == 3 and icmp.code == 4</code></td><td>ICMP Frag Needed - PMTUD signal</td></tr>
+            <tr><td><code>ip.frag_offset &gt; 0 or ip.flags.mf == 1</code></td><td>Any IPv4 fragmentation</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="margin-top:14px;"><strong>BPF capture filters (tcpdump / wireshark capture mode)</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Filter</th><th>Effect</th></tr></thead>
+          <tbody>
+            <tr><td><code>tcp port 443</code></td><td>HTTPS to/from any host</td></tr>
+            <tr><td><code>host 10.1.1.1 and not port 22</code></td><td>Everything to/from a host except SSH (don't capture your own session)</td></tr>
+            <tr><td><code>tcp[tcpflags] &amp; (tcp-syn|tcp-fin) != 0</code></td><td>Any SYN or FIN - connection setup/teardown only</td></tr>
+            <tr><td><code>tcp[13] == 0x02</code></td><td>SYN only (no ACK)</td></tr>
+            <tr><td><code>tcp[13] == 0x12</code></td><td>SYN+ACK only</td></tr>
+            <tr><td><code>tcp[13] &amp; 4 != 0</code></td><td>Any RST</td></tr>
+            <tr><td><code>icmp</code></td><td>All ICMP</td></tr>
+            <tr><td><code>icmp[icmptype] == icmp-unreach</code></td><td>ICMP Type 3 (Destination Unreachable, includes Frag Needed)</td></tr>
+            <tr><td><code>vlan 100 and host 10.1.1.1</code></td><td>Tagged traffic on VLAN 100</td></tr>
+            <tr><td><code>net 192.168.0.0/16</code></td><td>RFC1918 16-bit space</td></tr>
+            <tr><td><code>greater 1400</code></td><td>Packets larger than 1400 bytes - useful for MTU hunting</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="margin-top:14px;"><strong>Wireshark TCP analysis flags - what they actually mean</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Flag</th><th>Heuristic</th></tr></thead>
+          <tbody>
+            <tr><td>[TCP Retransmission]</td><td>Same seq seen again, more than RTT later. Probably loss.</td></tr>
+            <tr><td>[TCP Fast Retransmission]</td><td>Retransmit triggered after 3 dup ACKs (RFC 5681)</td></tr>
+            <tr><td>[TCP Dup ACK]</td><td>Receiver got out-of-order data, ACKing the last in-order byte again</td></tr>
+            <tr><td>[TCP Out-Of-Order]</td><td>Lower seq arrives after higher seq</td></tr>
+            <tr><td>[TCP Spurious Retransmission]</td><td>Retransmit of data already ACKed - sender timed out unnecessarily</td></tr>
+            <tr><td>[TCP Zero Window]</td><td>Receiver advertised window = 0, asking sender to pause</td></tr>
+            <tr><td>[TCP Window Update]</td><td>Receiver re-opens window after Zero Window</td></tr>
+            <tr><td>[TCP Previous Segment Not Captured]</td><td>Capture started mid-stream or capture missed packets - not necessarily a network problem</td></tr>
+            <tr><td>[TCP Keep-Alive]</td><td>1-byte segment with seq one less than expected, used to probe a quiet connection</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="margin-top:14px;"><strong>Useful ports for network engineers</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Port</th><th>Proto</th><th>Service</th></tr></thead>
+          <tbody>
+            <tr><td>22</td><td>TCP</td><td>SSH</td></tr>
+            <tr><td>53</td><td>UDP/TCP</td><td>DNS (TCP for AXFR and &gt;512 byte replies)</td></tr>
+            <tr><td>67/68</td><td>UDP</td><td>DHCP server / client</td></tr>
+            <tr><td>69</td><td>UDP</td><td>TFTP (firmware uploads, FortiManager backup)</td></tr>
+            <tr><td>123</td><td>UDP</td><td>NTP</td></tr>
+            <tr><td>161/162</td><td>UDP</td><td>SNMP get / trap</td></tr>
+            <tr><td>179</td><td>TCP</td><td>BGP</td></tr>
+            <tr><td>443</td><td>TCP</td><td>HTTPS, FortiGate GUI, SSL VPN portal</td></tr>
+            <tr><td>500</td><td>UDP</td><td>IKE (IPsec phase 1)</td></tr>
+            <tr><td>514</td><td>UDP</td><td>syslog</td></tr>
+            <tr><td>520</td><td>UDP</td><td>RIP</td></tr>
+            <tr><td>541</td><td>TCP</td><td>FortiGuard (older), FortiManager</td></tr>
+            <tr><td>636</td><td>TCP</td><td>LDAPS</td></tr>
+            <tr><td>1645/1646</td><td>UDP</td><td>RADIUS auth/acct (legacy)</td></tr>
+            <tr><td>1701</td><td>UDP</td><td>L2TP</td></tr>
+            <tr><td>1812/1813</td><td>UDP</td><td>RADIUS auth/acct</td></tr>
+            <tr><td>2055</td><td>UDP</td><td>NetFlow</td></tr>
+            <tr><td>3306</td><td>TCP</td><td>MySQL</td></tr>
+            <tr><td>3389</td><td>TCP</td><td>RDP</td></tr>
+            <tr><td>3478</td><td>UDP</td><td>STUN (Teams, WebRTC)</td></tr>
+            <tr><td>3799</td><td>UDP</td><td>RADIUS CoA</td></tr>
+            <tr><td>4500</td><td>UDP</td><td>IPsec NAT-T</td></tr>
+            <tr><td>4789</td><td>UDP</td><td>VXLAN</td></tr>
+            <tr><td>5060/5061</td><td>UDP/TCP</td><td>SIP / SIP-TLS</td></tr>
+            <tr><td>6081</td><td>UDP</td><td>Geneve (used by Azure GWLB and others)</td></tr>
+            <tr><td>8443</td><td>TCP</td><td>FortiGate GUI alternate, common admin port</td></tr>
+            <tr><td>10443</td><td>TCP</td><td>FortiGate SSL VPN default</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="margin-top:14px;"><strong>Reference RFCs</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>RFC</th><th>Title</th></tr></thead>
+          <tbody>
+            <tr><td>768</td><td>UDP</td></tr>
+            <tr><td>791</td><td>IPv4</td></tr>
+            <tr><td>792</td><td>ICMP</td></tr>
+            <tr><td>1191</td><td>Path MTU Discovery</td></tr>
+            <tr><td>2474 / 3168</td><td>DSCP / ECN</td></tr>
+            <tr><td>4443</td><td>ICMPv6</td></tr>
+            <tr><td>5681</td><td>TCP Congestion Control</td></tr>
+            <tr><td>8200</td><td>IPv6</td></tr>
+            <tr><td>9293</td><td>TCP (current, obsoletes RFC 793)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </details>
+
+  <details class="collapse">
+    <summary>QoS</summary>
+    <div class="collapse-body">
+      <p><strong>Scope</strong></p>
+      <p>QoS only matters when there is congestion. When the pipe is wider than demand, QoS does nothing useful. When demand exceeds capacity, QoS decides what gets through first and what waits or drops. The full job is: classify, mark, then enforce (queue, police, shape, drop). This collapsible focuses on the practical reference values and FortiGate-specific behaviour, with deep dives into Microsoft Teams QoS and SD-WAN shaping.</p>
+
+      <p style="margin-top:14px;"><strong>The ToS byte: DSCP + ECN</strong></p>
+      <p>Byte 1 of the IPv4 header, also Byte 1 of the IPv6 Traffic Class field. Same format, same semantics.</p>
+      <div class="code-wrap">
+        <pre class="code-block"> 0 1 2 3 4 5 6 7
++-+-+-+-+-+-+-+-+
+|   DSCP    |ECN|
++-+-+-+-+-+-+-+-+</pre>
+      </div>
+      <p style="margin-top:10px;">Top 6 bits = DSCP. Bottom 2 bits = ECN. The legacy "IP Precedence" field was the top 3 bits of DSCP, which is why CS values (Class Selector) line up: CS5 (5 in IPPrec) = 101000 in DSCP = decimal 40.</p>
+
+      <p style="margin-top:14px;"><strong>DSCP codepoint reference</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Decimal</th><th>Hex</th><th>Binary</th><th>Typical use</th></tr></thead>
+          <tbody>
+            <tr><td>CS0 / DF (Best Effort)</td><td>0</td><td><code>0x00</code></td><td><code>000000</code></td><td>Default. Everything unmarked.</td></tr>
+            <tr><td>CS1</td><td>8</td><td><code>0x08</code></td><td><code>001000</code></td><td>Scavenger / lower than best effort (bulk backups, P2P)</td></tr>
+            <tr><td>AF11 / AF12 / AF13</td><td>10 / 12 / 14</td><td><code>0x0A</code> / <code>0x0C</code> / <code>0x0E</code></td><td><code>001010</code> / <code>001100</code> / <code>001110</code></td><td>Low priority data, drop precedence 1/2/3</td></tr>
+            <tr><td>CS2</td><td>16</td><td><code>0x10</code></td><td><code>010000</code></td><td>OAM, network management</td></tr>
+            <tr><td>AF21 / AF22 / AF23</td><td>18 / 20 / 22</td><td><code>0x12</code> / <code>0x14</code> / <code>0x16</code></td><td><code>010010</code> / <code>010100</code> / <code>010110</code></td><td>Low-latency data (transactional). <strong>AF21 = Teams screen share</strong></td></tr>
+            <tr><td>CS3</td><td>24</td><td><code>0x18</code></td><td><code>011000</code></td><td>Call signalling (SIP, H.323, SCCP)</td></tr>
+            <tr><td>AF31 / AF32 / AF33</td><td>26 / 28 / 30</td><td><code>0x1A</code> / <code>0x1C</code> / <code>0x1E</code></td><td><code>011010</code> / <code>011100</code> / <code>011110</code></td><td>Multimedia streaming (one-way video)</td></tr>
+            <tr><td>CS4</td><td>32</td><td><code>0x20</code></td><td><code>100000</code></td><td>Real-time interactive (gaming)</td></tr>
+            <tr><td>AF41 / AF42 / AF43</td><td>34 / 36 / 38</td><td><code>0x22</code> / <code>0x24</code> / <code>0x26</code></td><td><code>100010</code> / <code>100100</code> / <code>100110</code></td><td>Multimedia conferencing. <strong>AF41 = Teams video</strong></td></tr>
+            <tr><td>CS5</td><td>40</td><td><code>0x28</code></td><td><code>101000</code></td><td>Broadcast video (legacy)</td></tr>
+            <tr><td>VA (Voice Admit)</td><td>44</td><td><code>0x2C</code></td><td><code>101100</code></td><td>Admission-controlled voice (RFC 5865)</td></tr>
+            <tr><td><strong>EF (Expedited Forwarding)</strong></td><td>46</td><td><code>0x2E</code></td><td><code>101110</code></td><td><strong>Real-time / voice. Teams audio</strong></td></tr>
+            <tr><td>CS6</td><td>48</td><td><code>0x30</code></td><td><code>110000</code></td><td>Network control (OSPF, BGP, ISIS). <strong>Do NOT use for user traffic</strong></td></tr>
+            <tr><td>CS7</td><td>56</td><td><code>0x38</code></td><td><code>111000</code></td><td>Reserved. Don't use.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="margin-top:14px;"><strong>How to read AFxy</strong></p>
+      <ul>
+        <li><strong>x</strong> (first digit) = the queue / class. 1=low priority data, 2=low-latency data, 3=streaming, 4=conferencing.</li>
+        <li><strong>y</strong> (second digit) = drop precedence within that class. 1=lowest probability of drop, 3=highest. WRED uses this to decide what to drop first under congestion.</li>
+        <li>So AF43 means "conferencing class, drop me first if congested". AF41 means "conferencing class, drop me last".</li>
+      </ul>
+
+      <p style="margin-top:14px;"><strong>ECN bits</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Value</th><th>Code</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><code>00</code></td><td>Not-ECT</td><td>Sender is not ECN capable. Drop on congestion.</td></tr>
+            <tr><td><code>10</code></td><td>ECT(0)</td><td>ECN capable. Mark instead of drop.</td></tr>
+            <tr><td><code>01</code></td><td>ECT(1)</td><td>ECN capable. Same as ECT(0) functionally.</td></tr>
+            <tr><td><code>11</code></td><td>CE</td><td>Congestion Experienced. A router along the path is congested.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:10px;">An ECN-aware router sees congestion, finds ECT(0)/ECT(1), and flips both bits to <code>11</code> (CE). Receiver echoes via TCP ECE flag in the next ACK. Sender reduces window (sends CWR flag in next segment). No packet drop, no retransmit. ECN works only end-to-end if every hop and both endpoints support it. Many middleboxes still zero it out.</p>
+
+      <p style="margin-top:14px;"><strong>802.1Q PCP / CoS (Layer 2 priority)</strong></p>
+      <p>Inside the 802.1Q tag, the TCI (Tag Control Information) field is 16 bits:</p>
+      <div class="code-wrap">
+        <pre class="code-block"> 0                   1
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| PCP |D|     VLAN ID (VID)     |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</pre>
+      </div>
+      <p style="margin-top:10px;">PCP (Priority Code Point) = 3 bits, also called CoS or 802.1p. DEI = 1 bit, drop eligibility indicator. VID = 12 bits, VLAN ID 0-4095.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>PCP</th><th>IEEE name</th><th>Typical use</th></tr></thead>
+          <tbody>
+            <tr><td>0</td><td>BK - Background</td><td>Bulk, lowest priority</td></tr>
+            <tr><td>1</td><td>BE - Best Effort</td><td>Default</td></tr>
+            <tr><td>2</td><td>EE - Excellent Effort</td><td>Important data</td></tr>
+            <tr><td>3</td><td>CA - Critical Applications</td><td>Call signalling</td></tr>
+            <tr><td>4</td><td>VI - Video</td><td>Conferencing video, streaming</td></tr>
+            <tr><td>5</td><td>VO - Voice</td><td>Real-time voice (&lt;10ms latency)</td></tr>
+            <tr><td>6</td><td>IC - Internetwork Control</td><td>OSPF, routing</td></tr>
+            <tr><td>7</td><td>NC - Network Control</td><td>STP, LLDP</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="margin-top:14px;"><strong>Standard DSCP ↔ CoS mapping</strong></p>
+      <p>Most vendors copy the top 3 bits of DSCP into the 3-bit CoS field. Useful when a router strips the 802.1Q tag on egress to a routed interface and the L2 priority gets lost - the DSCP survives.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>DSCP</th><th>CoS / PCP</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td>EF (46) / VA (44)</td><td>5</td><td>Top 3 bits = 101 = 5 (Voice)</td></tr>
+            <tr><td>AF41-43 (34-38) / CS4 (32)</td><td>4</td><td>Top 3 bits = 100 = 4 (Video)</td></tr>
+            <tr><td>AF31-33 (26-30) / CS3 (24)</td><td>3</td><td>Top 3 bits = 011 = 3 (Signalling)</td></tr>
+            <tr><td>AF21-23 (18-22) / CS2 (16)</td><td>2</td><td>Top 3 bits = 010 = 2 (Excellent Effort)</td></tr>
+            <tr><td>AF11-13 (10-14) / CS1 (8)</td><td>1</td><td>Top 3 bits = 001 = 1 (Best Effort)</td></tr>
+            <tr><td>CS0 (0)</td><td>0</td><td>Top 3 bits = 000</td></tr>
+            <tr><td>CS6 (48)</td><td>6</td><td>Network control</td></tr>
+            <tr><td>CS7 (56)</td><td>7</td><td>Reserved</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="margin-top:14px;"><strong>Trust boundaries</strong></p>
+      <ul>
+        <li>The <strong>trust boundary</strong> is the point in your network where you start honouring whatever DSCP/CoS the upstream device set. Inside: trust. Outside: classify and re-mark.</li>
+        <li><strong>Access ports (user devices):</strong> generally don't trust. Re-mark from CoS 0 / DSCP 0 unless the device is known good (Teams client with GPO, SIP phone with config).</li>
+        <li><strong>SIP phone uplink with PC dangling off it:</strong> trust CoS from the phone (CDP/LLDP-MED tells you what VLAN and how to trust), don't trust the PC behind it.</li>
+        <li><strong>Inter-switch trunks within your admin domain:</strong> trust.</li>
+        <li><strong>WAN edge (to ISP / MPLS):</strong> re-mark to whatever the carrier expects. Some scrub on ingress (set to 0), some preserve, some map DSCP to MPLS EXP. Confirm in writing with the carrier.</li>
+        <li><strong>Internet egress:</strong> assume markings will be wiped by the first ISP hop. End-to-end DSCP only works inside one admin domain or across a contracted MPLS service.</li>
+      </ul>
+
+      <p style="margin-top:14px;"><strong>Microsoft Teams QoS - the canonical configuration</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Traffic type</th><th>Source port range</th><th>Protocol</th><th>DSCP</th><th>Class</th></tr></thead>
+          <tbody>
+            <tr><td>Audio</td><td>50000-50019</td><td>TCP / UDP</td><td>46</td><td>EF (Expedited Forwarding)</td></tr>
+            <tr><td>Video</td><td>50020-50039</td><td>TCP / UDP</td><td>34</td><td>AF41</td></tr>
+            <tr><td>Application / Screen sharing</td><td>50040-50059</td><td>TCP / UDP</td><td>18</td><td>AF21</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:10px;">These are <strong>source port</strong> ranges on the Teams client. You must enable QoS in the Teams Admin Centre (Meetings &gt; Meeting settings) AND configure the client to insert DSCP markings via GPO/Intune. By default Teams uses any ephemeral port 1024-65535 and classification by port range fails.</p>
+
+      <p style="margin-top:14px;"><strong>Where to enable Teams QoS marking</strong></p>
+      <ul>
+        <li><strong>Teams Admin Centre tenant setting:</strong> Meetings &gt; Meeting settings &gt; Network &gt; Quality of Service. Turn on "Insert Quality of Service (QoS) markers" and lock to the 50000-50059 port ranges.</li>
+        <li><strong>Windows clients (domain joined):</strong> GPO Policy-based QoS targeting <code>ms-teams.exe</code> (new Teams) and <code>teams.exe</code> (classic), DSCP 46, source ports 50000-50019, protocol TCP+UDP. Repeat for video and sharing.</li>
+        <li><strong>Windows clients (Intune managed):</strong> NetworkQoSPolicy CSP via Intune. Same OMA-URI settings, applied per-device.</li>
+        <li><strong>Windows PowerShell (one-off):</strong> <code>New-NetQosPolicy -Name "TeamsAudio" -AppPathNameMatchCondition "ms-teams.exe" -IPProtocolMatchCondition Both -IPSrcPortStartMatchCondition 50000 -IPSrcPortEndMatchCondition 50019 -DSCPAction 46</code></li>
+        <li><strong>Teams Rooms on Android:</strong> tenant-level only. Note: Android Teams Rooms uses DSCP 34 (AF41) for both video AND screen sharing, not 18.</li>
+        <li><strong>Teams Rooms on Windows:</strong> same as Windows clients.</li>
+        <li><strong>macOS / Linux Teams clients:</strong> client-side DSCP marking is limited or absent. Mark at the network layer (FortiGate shaping policy matching the port ranges).</li>
+      </ul>
+
+      <p style="margin-top:14px;"><strong>Teams QoS gotchas</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Symptom / situation</th><th>Cause / fix</th></tr></thead>
+          <tbody>
+            <tr><td>QoS enabled but packets unmarked in capture</td><td>Tenant setting not on. Or client built date predates QoS support. Or admin port range not locked (still using 1024-65535).</td></tr>
+            <tr><td>Markings present LAN-side, absent WAN-side</td><td>ISP scrubbed DSCP. Mark again at WAN edge or accept that DSCP only works to the SD-WAN tunnel egress.</td></tr>
+            <tr><td>Audio fine, video and sharing degrade</td><td>EF queue is fine but AF41/AF21 are not policed/protected. Build a hierarchical shaper that reserves bandwidth for AF41 too.</td></tr>
+            <tr><td>Mac users complain, Windows fine</td><td>Mac client doesn't reliably mark DSCP. Use FortiGate to classify by source port range and mark on the firewall.</td></tr>
+            <tr><td>"Why is my BGP / OSPF flapping under load?"</td><td>You marked routing traffic with low DSCP, or you didn't and EF is starving it. Network control traffic should always be CS6.</td></tr>
+            <tr><td>Bandwidth usage estimate</td><td>Audio ~100 kbps, video ~1.5 Mbps per stream, screen share ~500 kbps - 4 Mbps. Plan EF queue at audio+headroom, AF41 for sum of expected concurrent video.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="margin-top:14px;"><strong>Queueing strategies</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Method</th><th>How it works</th><th>Trade-off</th></tr></thead>
+          <tbody>
+            <tr><td>FIFO</td><td>First in, first out. Single queue.</td><td>No QoS at all. Default on simple ports.</td></tr>
+            <tr><td>PQ (Priority Queueing)</td><td>Strict priority - high queue served before low.</td><td>High can starve everything else. Only safe with policed high.</td></tr>
+            <tr><td>WFQ (Weighted Fair Queueing)</td><td>Flows get fair share weighted by IP precedence.</td><td>Flow-based, no admin control over which apps win.</td></tr>
+            <tr><td>CBWFQ (Class-Based WFQ)</td><td>Admin-defined classes, each with a bandwidth guarantee.</td><td>Better but voice can still queue behind data in its class.</td></tr>
+            <tr><td>LLQ (Low Latency Queueing)</td><td>CBWFQ + a strict-priority queue for voice/real-time, policed.</td><td>Industry standard for voice/video. Police the PQ class so it can't starve others.</td></tr>
+            <tr><td>HQF / H-QoS</td><td>Hierarchical: parent shaper sets the ceiling, child classes share within it.</td><td>What FortiGate shaping profiles implement. Best for WAN edges.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="margin-top:14px;"><strong>Policing vs shaping</strong></p>
+      <ul>
+        <li><strong>Policing</strong>: hard ceiling. Excess is dropped (or re-marked) immediately. No buffering. Low memory, sharp edges, can be brutal on TCP. Use on ingress to protect downstream.</li>
+        <li><strong>Shaping</strong>: smooth ceiling. Excess is buffered and released at the configured rate. Adds latency but avoids loss. Use on egress to fit the next-hop pipe (ISP CIR, MPLS contract rate).</li>
+        <li>FortiGate does <strong>shaping</strong>, not policing. Conceptually it's a token-bucket egress shaper.</li>
+        <li>Rule of thumb: <strong>shape down, police up</strong>. Shape your egress to the carrier rate. Police user-side ingress to protect your shaper from overflowing.</li>
+      </ul>
+
+      <p style="margin-top:14px;"><strong>WRED / RED - drop strategies</strong></p>
+      <ul>
+        <li><strong>Tail drop</strong> (default): queue full, drop new arrivals. Causes global TCP synchronisation - everyone halves window at once, queue drains, everyone ramps up together, queue refills, repeat. Sawtooth utilisation.</li>
+        <li><strong>RED (Random Early Detection)</strong>: probabilistic drop as queue depth grows. Smooths TCP behaviour by hitting individual flows at different times.</li>
+        <li><strong>WRED (Weighted RED)</strong>: per-class drop curves. AF11 starts dropping at 30% queue depth, AF13 at 60% - drop precedence in action. EF rarely uses WRED because it's normally strict-priority and policed instead.</li>
+      </ul>
+
+      <p style="margin-top:14px;"><strong>FortiGate QoS - architecture and quirks</strong></p>
+      <ul>
+        <li>FortiGate shapes on <strong>egress</strong> only. To limit download speed for users, apply a shaper on the LAN-side interface (the egress for return traffic) - or use the <code>reverse</code> field on the shaping policy.</li>
+        <li>Three shaper types: <strong>shared</strong> (one bucket per policy or aggregate), <strong>per-IP</strong> (one bucket per source IP within a policy), <strong>interface-based / shaping profile</strong> (hierarchical, attached to physical interface).</li>
+        <li><strong>Shaping policies</strong> are separate from firewall policies, evaluated after the firewall policy matches. Order matters.</li>
+        <li><strong><code>outbandwidth</code> must be set on the interface</strong> for any shaping profile to work. Without a ceiling, the shaper has nothing to apportion. This is the single most common QoS misconfig on FortiGate.</li>
+        <li>SD-WAN service rules can match on DSCP and steer based on it (<code>dscp-forward enable</code>). Useful when CE-marked traffic should prefer MPLS over internet.</li>
+        <li>Three priority levels: high, medium, low. Within a priority, guaranteed-bandwidth is honoured first, then maximum-bandwidth caps.</li>
+      </ul>
+
+      <p style="margin-top:14px;"><strong>FortiGate shaper + shaping policy (Teams audio example)</strong></p>
+      <div class="code-wrap">
+        <pre class="code-block">config firewall shaper traffic-shaper
+    edit "Teams-Audio-EF"
+        set maximum-bandwidth 100000
+        set per-policy enable
+        set priority high
+        set diffserv-forward enable
+        set diffservcode-forward 101110
+        set diffserv-reverse enable
+        set diffservcode-rev 101110
+    next
+    edit "Teams-Video-AF41"
+        set maximum-bandwidth 4000000
+        set per-policy enable
+        set priority medium
+        set diffserv-forward enable
+        set diffservcode-forward 100010
+    next
+    edit "Bulk-CS1"
+        set guaranteed-bandwidth 1000
+        set maximum-bandwidth 1048576
+        set priority low
+        set diffserv-forward enable
+        set diffservcode-forward 001000
+    next
+end
+
+config firewall shaping-policy
+    edit 1
+        set name "Teams audio (port 50000-50019)"
+        set srcaddr "internal-subnets"
+        set dstaddr "all"
+        set service "ALL_UDP"
+        set srcintf "internal"
+        set dstintf "virtual-wan-link"
+        set traffic-shaper "Teams-Audio-EF"
+        set traffic-shaper-reverse "Teams-Audio-EF"
+    next
+end</pre>
+      </div>
+      <p style="margin-top:10px;">For port-range matching you'll typically build a custom firewall service object with the UDP source port range, then reference it in the shaping-policy <code>service</code> field.</p>
+
+      <p style="margin-top:14px;"><strong>FortiGate hierarchical shaping profile (egress)</strong></p>
+      <div class="code-wrap">
+        <pre class="code-block">config firewall shaping-profile
+    edit "wan-uplink"
+        set type queuing
+        set default-class-id 31
+        config shaping-entries
+            edit 1
+                set class-id 5
+                set priority high
+                set guaranteed-bandwidth-percentage 30
+                set maximum-bandwidth-percentage 100
+            next
+            edit 2
+                set class-id 10
+                set priority medium
+                set guaranteed-bandwidth-percentage 40
+                set maximum-bandwidth-percentage 100
+            next
+            edit 3
+                set class-id 31
+                set priority low
+                set guaranteed-bandwidth-percentage 10
+                set maximum-bandwidth-percentage 100
+            next
+        end
+    next
+end
+
+config system interface
+    edit "wan1"
+        set egress-shaping-profile "wan-uplink"
+        set outbandwidth 100000
+    next
+end</pre>
+      </div>
+      <p style="margin-top:10px;">Match traffic into class IDs via shaping policies (<code>set class-id 5</code>) or via firewall policies. Class IDs 2-31 are admin-defined; class 0 is internal, class 1 is reserved.</p>
+
+      <p style="margin-top:14px;"><strong>FortiGate SD-WAN service rule with DSCP forwarding</strong></p>
+      <div class="code-wrap">
+        <pre class="code-block">config system sdwan
+    config service
+        edit 1
+            set name "Teams-EF-prefer-MPLS"
+            set mode priority
+            set priority-members 1 2
+            set dst "Microsoft-365-services"
+            set tos 0xb8
+            set tos-mask 0xfc
+        next
+        edit 2
+            set name "Set-EF-on-egress"
+            set priority-members 1
+            set dscp-forward enable
+            set dscp-forward-tag 101110
+            set dst "voip-server"
+        next
+    end
+end</pre>
+      </div>
+      <p style="margin-top:10px;">The <code>tos</code> / <code>tos-mask</code> pair matches packets already marked. <code>0xb8</code> = <code>10111000</code> = EF (46) shifted left 2 bits because ToS field is 8 bits wide. Mask <code>0xfc</code> ignores the bottom 2 ECN bits. <code>dscp-forward-tag</code> sets a new DSCP on egress through the SD-WAN.</p>
+
+      <p style="margin-top:14px;"><strong>FortiGate QoS troubleshooting</strong></p>
+      <div class="code-wrap">
+        <pre class="code-block">diagnose firewall shaper traffic-shaper list
+diagnose firewall shaper per-ip-shaper list
+diagnose firewall shaper interface-shaper list
+diagnose firewall iprope list 100015
+diagnose netlink interface list &lt;intf&gt;
+get system performance status
+diag sniffer packet any 'host x.x.x.x' 4 0 a    # 'a' includes timestamp; check TOS byte</pre>
+      </div>
+      <ul>
+        <li><code>diag firewall shaper traffic-shaper list</code> shows per-shaper counters: current bandwidth, packets dropped, bytes dropped. Drops here mean your shaper is doing its job.</li>
+        <li><code>diag firewall iprope list 100015</code> shows shaping-policy rules with the shaper attached (forward and reverse). This is where you confirm a policy is actually getting the shaper you expect.</li>
+        <li><code>get system performance status</code> shows CPU. Shaping is CPU-bound on lower-end models, so check before blaming the shaper for slowness.</li>
+      </ul>
+
+      <p style="margin-top:14px;"><strong>Wireshark filters for QoS work</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Filter</th><th>What it catches</th></tr></thead>
+          <tbody>
+            <tr><td><code>ip.dsfield.dscp == 46</code></td><td>EF packets (Teams audio if marked)</td></tr>
+            <tr><td><code>ip.dsfield.dscp == 34</code></td><td>AF41 (Teams video)</td></tr>
+            <tr><td><code>ip.dsfield.dscp == 18</code></td><td>AF21 (Teams screen share)</td></tr>
+            <tr><td><code>ip.dsfield.dscp != 0</code></td><td>Anything marked (sanity check that markings are surviving the path)</td></tr>
+            <tr><td><code>ip.dsfield.ecn != 0</code></td><td>ECN-capable packets, including CE-marked</td></tr>
+            <tr><td><code>ip.dsfield.ecn == 3</code></td><td>CE-marked (congestion experienced) - someone's queue is filling</td></tr>
+            <tr><td><code>vlan.priority == 5</code></td><td>CoS 5 frames (voice on 802.1Q)</td></tr>
+            <tr><td><code>vlan.priority != 0</code></td><td>Any non-default CoS</td></tr>
+            <tr><td><code>udp.srcport &gt;= 50000 and udp.srcport &lt;= 50019</code></td><td>Teams audio source port range</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="margin-top:14px;"><strong>Common gotchas across the board</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Gotcha</th><th>What's actually happening</th></tr></thead>
+          <tbody>
+            <tr><td>FortiGate shaper does nothing</td><td><code>outbandwidth</code> not set on the interface. Or shaping policy not matching - check <code>diag firewall iprope list 100015</code>.</td></tr>
+            <tr><td>Download speed not limited by FortiGate shaper</td><td>You shaped the WAN interface egress (uploads). For downloads, shape on the LAN interface egress OR use <code>traffic-shaper-reverse</code>.</td></tr>
+            <tr><td>DSCP wiped at ISP</td><td>Normal for internet. Re-mark inside the SD-WAN overlay, or accept end-to-end DSCP only works to the tunnel egress.</td></tr>
+            <tr><td>IPsec strips inner DSCP</td><td>Default behaviour: outer ESP packet gets DSCP 0. Configure copy-dscp on the IPsec tunnel (<code>set copy-tos enable</code> on FortiGate <code>vpn ipsec phase1-interface</code>) to preserve.</td></tr>
+            <tr><td>MPLS provider doesn't honour your DSCP</td><td>Most map DSCP→EXP at PE ingress, with a contracted mapping. Confirm the mapping table with the carrier. Default is usually first 3 bits of DSCP into 3-bit EXP.</td></tr>
+            <tr><td>Voice quality worse with QoS enabled</td><td>EF queue too small or strict-priority not policed - EF traffic exceeds its allocation and tail-drops itself. Or you marked everything EF and now nothing is preferred.</td></tr>
+            <tr><td>SD-WAN performance SLA + QoS not playing nice</td><td>SD-WAN steers based on link health (jitter/loss/latency). QoS prioritises within a link. They're complementary, not redundant. SLA decides which member, QoS decides queue order on that member.</td></tr>
+            <tr><td>Teams traffic marked EF but not surviving the tunnel</td><td>FortiGate IPsec <code>copy-dscp</code> or <code>set copy-tos enable</code> on phase1-interface. Without it, inner DSCP is lost on the outer ESP header.</td></tr>
+            <tr><td>Switch trust on access port marked everything CS6</td><td>Trust was on, attacker / misconfigured device sent DSCP 48 (CS6 = network control). Either don't trust access ports, or use port-level policers that clamp DSCP to a max value.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="margin-top:14px;"><strong>Reference RFCs</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>RFC</th><th>Title</th></tr></thead>
+          <tbody>
+            <tr><td>2474</td><td>DSCP definition (replaces ToS interpretation)</td></tr>
+            <tr><td>2475</td><td>DiffServ architecture</td></tr>
+            <tr><td>2597</td><td>Assured Forwarding (AF) PHB group</td></tr>
+            <tr><td>3168</td><td>ECN</td></tr>
+            <tr><td>3246</td><td>Expedited Forwarding (EF) PHB</td></tr>
+            <tr><td>4594</td><td>DiffServ Service Class configuration guidelines (the "what should I use for X" guide)</td></tr>
+            <tr><td>5865</td><td>Voice-Admit (VA) codepoint</td></tr>
+            <tr><td>IEEE 802.1Q</td><td>PCP, DEI, VID definitions</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </details>
+</section>
+
+</main>
+
+<!-- ============================================================
+     Footer
+============================================================ -->
+<footer>
+  <div class="footer-inner">
+    <span>Aaqhil Hussain</span>
+    <span class="muted">FortiGate field reference · single-file build</span>
+  </div>
+</footer>
+
+<!-- ============================================================
+     Search modal
+============================================================ -->
+<div class="search-modal" id="searchModal">
+  <div class="search-box">
+    <div class="search-input-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input class="search-input" id="searchInput" type="text" placeholder="Search commands, sections, tabs...">
+      <kbd>esc</kbd>
+    </div>
+    <div class="search-results" id="searchResults"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// Shared helpers
+// ============================================================
+function isValidIPv4(s) {
+  if (!s || typeof s !== 'string') return false;
+  const parts = s.split('.');
+  if (parts.length !== 4) return false;
+  for (const p of parts) {
+    if (!/^\d+$/.test(p)) return false;          // digits only
+    if (p.length > 1 && p[0] === '0') return false; // no leading zeros
+    if (p.length > 3) return false;
+    const n = Number(p);
+    if (n < 0 || n > 255) return false;
+  }
+  return true;
+}
+function isValidPort(s) {
+  if (!s || typeof s !== 'string') return false;
+  if (!/^\d+$/.test(s)) return false;
+  if (s.length > 1 && s[0] === '0') return false;
+  const n = Number(s);
+  return n >= 1 && n <= 65535;
+}
+function flashInvalid(el) {
+  el.style.borderColor = 'var(--accent)';
+  setTimeout(() => el.style.borderColor = '', 1500);
+}
+// Live feedback: clear the red border as soon as the user starts correcting the value
+document.addEventListener('input', (e) => {
+  const el = e.target;
+  if (el && el.classList && el.classList.contains('form-input') && el.style.borderColor) {
+    el.style.borderColor = '';
+  }
+});
+// Enter key on any .form-input inside a .gen-card triggers that card's Generate button
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' || e.isComposing) return;
+  const el = e.target;
+  if (!el || !el.classList || !el.classList.contains('form-input')) return;
+  const card = el.closest('.gen-card');
+  if (!card) return;
+  const btn = card.querySelector('button[id$="-generate"]');
+  if (btn) {
+    e.preventDefault();
+    btn.click();
+  }
+});
+
+// ============================================================
+// Tabs
+// ============================================================
+const tabs = document.querySelectorAll('.tab');
+const panels = document.querySelectorAll('.panel');
+
+function showTab(name) {
+  tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  panels.forEach(p => p.classList.toggle('active', p.dataset.panel === name));
+  try { history.replaceState(null, '', '#' + name); } catch (e) { /* sandboxed iframe */ }
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+tabs.forEach(t => t.addEventListener('click', () => showTab(t.dataset.tab)));
+
+const initialHash = location.hash.replace('#', '');
+if (initialHash && document.querySelector(`.tab[data-tab="${initialHash}"]`)) {
+  showTab(initialHash);
+}
+
+// ============================================================
+// Copy buttons
+// ============================================================
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.copy-btn');
+  if (!btn) return;
+
+  let text = '';
+  if (btn.dataset.copy) {
+    const target = document.getElementById(btn.dataset.copy);
+    if (target) text = target.innerText;
+  } else if (btn.dataset.copyText) {
+    text = btn.dataset.copyText;
+  }
+
+  if (!text) return;
+
+  navigator.clipboard.writeText(text).then(() => {
+    const original = btn.innerHTML;
+    btn.classList.add('copied');
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Copied';
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = original;
+    }, 1400);
+  });
+});
+
+// ============================================================
+// Debug Flow generator
+// ============================================================
+const dfProto = document.getElementById('df-proto');
+const dfPortWrap = document.getElementById('df-port-wrap');
+const dfDst = document.getElementById('df-dst');
+const dfSrc = document.getElementById('df-src');
+const dfPort = document.getElementById('df-port');
+const dfOut = document.getElementById('df-out');
+const dfOutWrap = document.getElementById('df-out-wrap');
+const dfRecent = document.getElementById('df-recent');
+
+function syncDfPortVisibility() {
+  const v = dfProto.value;
+  dfPortWrap.style.display = (v === 'tcp' || v === 'udp') ? 'flex' : 'none';
+}
+dfProto.addEventListener('change', syncDfPortVisibility);
+syncDfPortVisibility();
+
+const RECENT_KEY = 'forti-recent-traces';
+const RECENT_MAX = 5;
+
+function loadRecent() {
+  try {
+    let raw = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
+    // One-time migration from the old dst-only string array format
+    if (raw.length === 0) {
+      const oldRaw = JSON.parse(localStorage.getItem('forti-recent-dst') || '[]');
+      if (Array.isArray(oldRaw) && oldRaw.length && typeof oldRaw[0] === 'string') {
+        raw = oldRaw.map(ip => ({ dst: ip, src: '' }));
+        localStorage.setItem(RECENT_KEY, JSON.stringify(raw));
+        localStorage.removeItem('forti-recent-dst');
+      }
+    }
+    return raw.filter(e => e && (e.dst || e.src));
+  } catch { return []; }
+}
+function saveRecent(entry) {
+  if (!entry || (!entry.dst && !entry.src)) return;
+  let r = loadRecent().filter(x => !(x.dst === entry.dst && x.src === entry.src));
+  r.unshift(entry);
+  r = r.slice(0, RECENT_MAX);
+  try { localStorage.setItem(RECENT_KEY, JSON.stringify(r)); } catch (e) { /* private mode, quota, file:// */ }
+  renderRecent();
+}
+function entryLabel(e) {
+  if (e.src && e.dst) return `${e.src} → ${e.dst}`;
+  if (e.dst) return `→ ${e.dst}`;
+  if (e.src) return `${e.src} →`;
+  return '';
+}
+function renderRecent() {
+  const r = loadRecent();
+  dfRecent.querySelectorAll('.recent-pill').forEach(p => p.remove());
+  r.forEach(entry => {
+    const pill = document.createElement('button');
+    pill.className = 'recent-pill';
+    pill.textContent = entryLabel(entry);
+    pill.title = 'Click to reload this filter';
+    pill.addEventListener('click', () => {
+      dfDst.value = entry.dst || '';
+      dfSrc.value = entry.src || '';
+    });
+    dfRecent.appendChild(pill);
+  });
+  dfRecent.style.display = r.length ? 'flex' : 'none';
+}
+renderRecent();
+
+document.getElementById('df-generate').addEventListener('click', () => {
+  const dst = dfDst.value.trim();
+  const src = dfSrc.value.trim();
+
+  if (!dst && !src) {
+    [dfDst, dfSrc].forEach(flashInvalid);
+    dfDst.focus();
+    return;
+  }
+
+  // Reject invalid IPv4 in either field (empty is fine, malformed is not)
+  const bad = [];
+  if (dst && !isValidIPv4(dst)) bad.push(dfDst);
+  if (src && !isValidIPv4(src)) bad.push(dfSrc);
+  if (bad.length) {
+    bad.forEach(flashInvalid);
+    bad[0].focus();
+    return;
+  }
+
+  const proto = dfProto.value;
+  const port = dfPort.value.trim();
+
+  // Validate port if filled and protocol uses it
+  if (port && (proto === 'tcp' || proto === 'udp') && !isValidPort(port)) {
+    flashInvalid(dfPort);
+    dfPort.focus();
+    return;
+  }
+
+  const lines = [
+    'diagnose debug disable',
+    'diagnose debug reset',
+    'diagnose debug flow filter clear'
+  ];
+  if (dst) lines.push(`diagnose debug flow filter daddr ${dst}`);
+  if (src) lines.push(`diagnose debug flow filter saddr ${src}`);
+  const protoMap = { icmp: 1, tcp: 6, udp: 17 };
+  if (proto !== 'any') lines.push(`diagnose debug flow filter proto ${protoMap[proto]}`);
+  if (port && (proto === 'tcp' || proto === 'udp')) lines.push(`diagnose debug flow filter port ${port}`);
+  lines.push('diagnose debug flow show function-name enable');
+  lines.push('diagnose debug flow show iprope enable');
+  lines.push('diagnose debug flow trace start 999');
+  lines.push('diagnose debug enable');
+
+  dfOut.textContent = lines.join('\n');
+  dfOutWrap.classList.remove('empty');
+  dfOutWrap.querySelector('.copy-btn').style.display = 'flex';
+  saveRecent({ dst, src });
+});
+
+document.getElementById('df-stop').addEventListener('click', () => {
+  dfOut.textContent = [
+    'diagnose debug disable',
+    'diagnose debug reset',
+    'diagnose debug flow trace stop',
+    'diagnose debug flow filter clear'
+  ].join('\n');
+  dfOutWrap.classList.remove('empty');
+  dfOutWrap.querySelector('.copy-btn').style.display = 'flex';
+});
+
+// ============================================================
+// Sniffer generator
+// ============================================================
+document.getElementById('sn-generate').addEventListener('click', () => {
+  const intf = (document.getElementById('sn-intf').value.trim() || 'any');
+  const h1El = document.getElementById('sn-host1');
+  const h2El = document.getElementById('sn-host2');
+  const portEl = document.getElementById('sn-port');
+  const h1 = h1El.value.trim();
+  const h2 = h2El.value.trim();
+  const port = portEl.value.trim();
+  const verb = document.getElementById('sn-verb').value;
+
+  // Reject invalid IPv4 in host fields (empty is fine)
+  const bad = [];
+  if (h1 && !isValidIPv4(h1)) bad.push(h1El);
+  if (h2 && !isValidIPv4(h2)) bad.push(h2El);
+  if (bad.length) {
+    bad.forEach(flashInvalid);
+    bad[0].focus();
+    return;
+  }
+
+  // Validate port if filled
+  if (port && !isValidPort(port)) {
+    flashInvalid(portEl);
+    portEl.focus();
+    return;
+  }
+
+  const parts = [];
+  if (h1) parts.push(`host ${h1}`);
+  if (h2) parts.push(`host ${h2}`);
+  if (port) parts.push(`port ${port}`);
+
+  const filter = parts.length ? `"${parts.join(' and ')}"` : '"none"';
+  const cmd = `diagnose sniffer packet ${intf} ${filter} ${verb} 0 l`;
+
+  const out = document.getElementById('sn-out');
+  out.textContent = cmd;
+  const wrap = out.closest('.code-wrap');
+  wrap.classList.remove('empty');
+  wrap.querySelector('.copy-btn').style.display = 'flex';
+});
+
+// ============================================================
+// IKE generator
+// ============================================================
+document.getElementById('ike-generate').addEventListener('click', () => {
+  const ipEl = document.getElementById('ike-ip');
+  const ip = ipEl.value.trim();
+  if (!ip) {
+    flashInvalid(ipEl);
+    ipEl.focus();
+    return;
+  }
+  if (!isValidIPv4(ip)) {
+    flashInvalid(ipEl);
+    ipEl.focus();
+    return;
+  }
+
+  const lines = [
+    'diagnose debug disable',
+    'diagnose vpn ike log filter clear',
+    `diagnose vpn ike log filter rem-addr4 ${ip}`,
+    'diagnose debug application ike -1',
+    'diagnose debug console timestamp enable',
+    'diagnose debug enable'
+  ];
+  const out = document.getElementById('ike-out');
+  out.textContent = lines.join('\n');
+  const wrap = out.closest('.code-wrap');
+  wrap.classList.remove('empty');
+  wrap.querySelector('.copy-btn').style.display = 'flex';
+});
+
+// ============================================================
+// Search
+// ============================================================
+const searchBtn = document.getElementById('searchBtn');
+const searchModal = document.getElementById('searchModal');
+const searchInput = document.getElementById('searchInput');
+const searchResults = document.getElementById('searchResults');
+
+const searchIndex = [];
+function buildSearchIndex() {
+  document.querySelectorAll('.panel').forEach(panel => {
+    const tabName = panel.dataset.panel;
+    const tabBtn = document.querySelector(`.tab[data-tab="${tabName}"]`);
+    const tabLabel = tabBtn ? tabBtn.textContent : tabName;
+
+    // Card titles
+    panel.querySelectorAll('.card-title, .gen-heading').forEach(el => {
+      searchIndex.push({
+        title: el.textContent.trim(),
+        tab: tabName,
+        tabLabel,
+        el
+      });
+    });
+    // Collapsible summaries
+    panel.querySelectorAll('details > summary').forEach(el => {
+      const txt = el.textContent.replace(/·.*$/, '').trim();
+      searchIndex.push({
+        title: txt,
+        tab: tabName,
+        tabLabel,
+        el: el.parentElement
+      });
+    });
+  });
+}
+buildSearchIndex();
+
+function openSearch() {
+  searchModal.classList.add('open');
+  searchInput.value = '';
+  renderSearchResults('');
+  setTimeout(() => searchInput.focus(), 30);
+}
+function closeSearch() {
+  searchModal.classList.remove('open');
+}
+
+let focusedIdx = -1;
+function renderSearchResults(q) {
+  q = q.toLowerCase().trim();
+  let results;
+  if (!q) {
+    results = searchIndex.slice(0, 10);
+  } else {
+    results = searchIndex.filter(r => r.title.toLowerCase().includes(q));
+  }
+  focusedIdx = results.length ? 0 : -1;
+
+  if (!results.length) {
+    searchResults.innerHTML = '<div class="search-empty">No matches.</div>';
+    return;
+  }
+
+  searchResults.innerHTML = results.map((r, i) => `
+    <div class="search-result ${i === 0 ? 'focused' : ''}" data-idx="${i}">
+      <div class="search-result-title">${escapeHtml(r.title)}</div>
+      <div class="search-result-meta">${escapeHtml(r.tabLabel)}</div>
+    </div>
+  `).join('');
+
+  searchResults.querySelectorAll('.search-result').forEach((el, i) => {
+    el.addEventListener('click', () => jumpTo(results[i]));
+  });
+  searchResults._results = results;
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function jumpTo(item) {
+  closeSearch();
+  showTab(item.tab);
+  setTimeout(() => {
+    if (item.el.tagName === 'DETAILS') item.el.setAttribute('open', '');
+    item.el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    item.el.style.transition = 'box-shadow 0.6s ease';
+    item.el.style.boxShadow = '0 0 0 2px var(--accent-soft)';
+    setTimeout(() => item.el.style.boxShadow = '', 1500);
+  }, 100);
+}
+
+searchBtn.addEventListener('click', openSearch);
+searchInput.addEventListener('input', e => renderSearchResults(e.target.value));
+searchModal.addEventListener('click', e => {
+  if (e.target === searchModal) closeSearch();
+});
+
+document.addEventListener('keydown', e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault();
+    openSearch();
+  } else if (e.key === 'Escape') {
+    if (searchModal.classList.contains('open')) closeSearch();
+  } else if (searchModal.classList.contains('open')) {
+    const results = searchResults._results || [];
+    const items = searchResults.querySelectorAll('.search-result');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      focusedIdx = Math.min(focusedIdx + 1, results.length - 1);
+      items.forEach((el, i) => el.classList.toggle('focused', i === focusedIdx));
+      items[focusedIdx]?.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      focusedIdx = Math.max(focusedIdx - 1, 0);
+      items.forEach((el, i) => el.classList.toggle('focused', i === focusedIdx));
+      items[focusedIdx]?.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter' && focusedIdx >= 0) {
+      e.preventDefault();
+      jumpTo(results[focusedIdx]);
+    }
+  }
+});
+
+// Detect platform for kbd hint
+if (!navigator.platform.toUpperCase().includes('MAC')) {
+  document.querySelectorAll('kbd').forEach(k => {
+    if (k.textContent === '⌘K') k.textContent = 'Ctrl K';
+  });
+}
+</script>
+</body>
+</html>
