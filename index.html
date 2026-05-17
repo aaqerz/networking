@@ -1915,34 +1915,70 @@ end</pre>
     </div>
   </details>
 
-  <details class="collapse">
-    <summary>802.1X (PEAP-MSCHAPv2)</summary>
+ <details class="collapse">
+    <summary>802.1X · PEAP-MSCHAPv2</summary>
     <div class="collapse-body">
-      <p><strong>Core concept</strong></p>
-      <p>One SSID, multiple VLANs. Users land in different VLANs based on AD group membership. The decision is made at the RADIUS server, not the AP, not AD, not the device.</p>
+      <p><strong>What it is</strong></p>
+      <p>A password-based EAP method. The RADIUS server presents a certificate so the client can validate it. Once a TLS tunnel is built, the client sends its username and password inside the tunnel using MSCHAPv2. The RADIUS server validates the password against AD.</p>
+      <p>Server proves itself with a cert. Client proves itself with a password. One-way cert auth on the outside, password auth inside the tunnel.</p>
 
-      <p style="margin-top:14px;"><strong>Component responsibilities</strong></p>
+      <p style="margin-top:14px;"><strong>The three players</strong></p>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Layer</th><th>Owns</th><th>Knows about</th></tr></thead>
+          <thead><tr><th>Role</th><th>Component</th><th>Responsibility</th></tr></thead>
           <tbody>
-            <tr><td>AD</td><td>Users, passwords, group memberships</td><td>Identity only. No VLAN awareness</td></tr>
-            <tr><td>NPS (Microsoft RADIUS)</td><td>Network Policies, tunnel attributes</td><td>Identity to tunnel-string mapping</td></tr>
-            <tr><td>AP / WLC / controller (vendor-specific)</td><td>VLAN Assignment Rules</td><td>Tunnel-string to VLAN mapping</td></tr>
-            <tr><td>Switch / DHCP</td><td>VLANs, subnets, scopes</td><td>The actual L2/L3 plumbing</td></tr>
+            <tr><td>Supplicant</td><td>Client device (laptop, phone)</td><td>Sends credentials, validates server cert</td></tr>
+            <tr><td>Authenticator</td><td>NAS (AP, WLC, switch)</td><td>Relays EAP between supplicant and RADIUS. Does not participate in the auth itself</td></tr>
+            <tr><td>Authentication Server</td><td>RADIUS (NPS, ClearPass, FreeRADIUS, RADIUSaaS)</td><td>Validates the credentials, makes the policy decision</td></tr>
           </tbody>
         </table>
       </div>
-      <p style="margin-top:10px;">NPS is Microsoft's RADIUS server product. RADIUS is the protocol. Same server, two names.</p>
+      <p style="margin-top:10px;">EAP runs end-to-end between supplicant and RADIUS. The NAS is a postman. It wraps EAP in EAPOL on the wireless side, repackages it inside RADIUS attributes on the wired side, and forwards it. It cannot read the EAP payload.</p>
 
-      <p style="margin-top:14px;"><strong>Where the tunnel / VLAN decision lives</strong></p>
+      <p style="margin-top:14px;"><strong>What each side needs</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Side</th><th>Requirement</th></tr></thead>
+          <tbody>
+            <tr><td>RADIUS server</td><td>Server certificate trusted by clients</td></tr>
+            <tr><td>Client</td><td>Username, password, and trust of the RADIUS server's CA</td></tr>
+            <tr><td>Backend</td><td>AD account with valid password</td></tr>
+            <tr><td>PKI</td><td>Server cert only. No client certs needed</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="margin-top:14px;"><strong>End-to-end auth flow</strong></p>
+      <ol>
+        <li>User connects to SSID, supplicant prompted for credentials</li>
+        <li>AP wraps EAP-Identity in Access-Request (code 1) to RADIUS on UDP 1812</li>
+        <li>RADIUS replies with Access-Challenge (code 11) to start the PEAP TLS handshake</li>
+        <li>Multiple Request and Challenge round trips negotiate the TLS tunnel. Server presents its certificate, supplicant validates it, both derive session keys</li>
+        <li>Supplicant sends MSCHAPv2 challenge/response inside the encrypted TLS tunnel</li>
+        <li>RADIUS validates the MSCHAPv2 response against AD via the Netlogon Secure Channel to a domain controller</li>
+        <li>RADIUS queries AD via LDAP for group memberships</li>
+        <li>RADIUS walks Network Policies top to bottom, first match wins</li>
+        <li>Matched policy injects tunnel attributes into reply</li>
+        <li>RADIUS sends Access-Accept (code 2) with Tunnel-Type, Tunnel-Medium-Type, Tunnel-Assignment-Id, MS-MPPE keys</li>
+        <li>AP reads Tunnel-Assignment-Id, matches its VLAN Assignment Rule, bridges client into assigned VLAN</li>
+        <li>AP uses MS-MPPE keys to derive PMK for WPA2 4-way handshake</li>
+        <li>Client gets DHCP from the assigned VLAN's scope</li>
+        <li>AP sends Accounting-Request Start (code 4) on UDP 1813</li>
+        <li>RADIUS replies Accounting-Response (code 5)</li>
+        <li>Periodic Interim-Updates throughout session, Stop on disconnect</li>
+      </ol>
+
+      <p style="margin-top:14px;"><strong>Critical truth about the request packet</strong></p>
+      <p>The Access-Request does not contain a VLAN or tunnel ID. It carries only:</p>
       <ul>
-        <li>Not on the AD user object</li>
-        <li>Not in a GPO</li>
-        <li>Not on the AP</li>
-        <li>Lives in the NPS Network Policy, hardcoded as a string by the network admin</li>
-        <li>Sent only in the Access-Accept reply, never in the request</li>
+        <li>User-Name</li>
+        <li>EAP-Message (outer plaintext, inner encrypted once TLS is up)</li>
+        <li>NAS-IP-Address, NAS-Identifier</li>
+        <li>Called-Station-Id (AP BSSID + SSID)</li>
+        <li>Calling-Station-Id (client MAC)</li>
+        <li>NAS-Port-Type (Wireless-802.11)</li>
       </ul>
+      <p>The tunnel attributes only appear on the return leg (Access-Accept), generated by RADIUS based on policy match.</p>
 
       <p style="margin-top:14px;"><strong>RADIUS message codes - Authentication (UDP 1812)</strong></p>
       <div class="table-wrap">
@@ -1962,7 +1998,7 @@ end</pre>
         <table>
           <thead><tr><th>Code</th><th>Message</th><th>Direction</th><th>Purpose</th></tr></thead>
           <tbody>
-            <tr><td>4</td><td>Accounting-Request</td><td>NAS to RADIUS</td><td>User session started, updated, or ended. Log it</td></tr>
+            <tr><td>4</td><td>Accounting-Request</td><td>NAS to RADIUS</td><td>Session started, updated, or ended. Log it</td></tr>
             <tr><td>5</td><td>Accounting-Response</td><td>RADIUS to NAS</td><td>Logged, acknowledged</td></tr>
           </tbody>
         </table>
@@ -1996,38 +2032,6 @@ end</pre>
       </div>
       <p style="margin-top:10px;">Aruba Instant typically uses attribute 82. Cisco WLC typically uses attribute 81. Both achieve the same outcome.</p>
 
-      <p style="margin-top:14px;"><strong>End-to-end auth flow (PEAP-MSCHAPv2)</strong></p>
-      <ol>
-        <li>User connects to SSID, supplicant sends credentials</li>
-        <li>AP wraps credentials in Access-Request (code 1) to NPS on UDP 1812</li>
-        <li>NPS replies with Access-Challenge (code 11) to start TLS handshake</li>
-        <li>Multiple Request and Challenge round trips negotiate TLS tunnel (cert exchange, key derivation)</li>
-        <li>Supplicant sends MSCHAPv2 credentials inside the encrypted TLS tunnel</li>
-        <li>NPS validates the MSCHAPv2 challenge/response against AD via the Netlogon Secure Channel to a domain controller</li>
-        <li>NPS queries AD via LDAP for group memberships</li>
-        <li>NPS walks Network Policies top to bottom, first match wins</li>
-        <li>Matched policy injects tunnel attributes into reply</li>
-        <li>NPS sends Access-Accept (code 2) with Tunnel-Type, Tunnel-Medium-Type, Tunnel-Assignment-Id, MS-MPPE keys</li>
-        <li>AP reads Tunnel-Assignment-Id, matches its VLAN Assignment Rule, bridges client into assigned VLAN</li>
-        <li>AP uses MS-MPPE keys to derive PMK for WPA2 4-way handshake</li>
-        <li>Client gets DHCP from the assigned VLAN's scope</li>
-        <li>AP sends Accounting-Request Start (code 4) on UDP 1813</li>
-        <li>NPS replies Accounting-Response (code 5)</li>
-        <li>Periodic Interim-Updates throughout session, Stop on disconnect</li>
-      </ol>
-
-      <p style="margin-top:14px;"><strong>Critical truth about the request packet</strong></p>
-      <p>The Access-Request does NOT contain a VLAN or tunnel ID. It carries only:</p>
-      <ul>
-        <li>User-Name</li>
-        <li>EAP-Message - carries the EAP payload (outer plaintext, inner encrypted once TLS is up)</li>
-        <li>NAS-IP-Address, NAS-Identifier</li>
-        <li>Called-Station-Id (AP BSSID + SSID)</li>
-        <li>Calling-Station-Id (client MAC)</li>
-        <li>NAS-Port-Type (Wireless-802.11)</li>
-      </ul>
-      <p>The tunnel attributes only appear on the return leg (Access-Accept), generated by NPS based on policy match.</p>
-
       <p style="margin-top:14px;"><strong>RADIUS packet structure</strong></p>
       <div class="code-wrap">
         <pre class="code-block">+--------+--------+----------------+--------------------+----------+
@@ -2040,7 +2044,7 @@ end</pre>
       <p style="margin-top:14px;"><strong>Onboarding workflow for new user category</strong></p>
       <p>One-time setup (network team):</p>
       <ol>
-        <li>Create NPS Network Policy with condition: User Groups contains X</li>
+        <li>Create RADIUS Network Policy with condition: User Groups contains X</li>
         <li>Set RADIUS attributes: Tunnel-Type=VLAN, Tunnel-Medium-Type=802, Tunnel-Assignment-Id=N</li>
         <li>Create AP VLAN Assignment Rule: if Tunnel-Assignment-Id equals N then bridge VLAN N</li>
         <li>Ensure VLAN N exists on switch, has DHCP scope, has SVI / gateway</li>
@@ -2050,41 +2054,51 @@ end</pre>
         <li>Create user in AD</li>
         <li>Add to the appropriate AD group</li>
       </ol>
-      <p>That is it. AD touches identity only. NPS holds the policy. AP holds the rule.</p>
+      <p>AD touches identity only. RADIUS holds the policy. AP holds the rule.</p>
+
+      <p style="margin-top:14px;"><strong>Strengths</strong></p>
+      <ul>
+        <li>No client-side PKI required, just username and password</li>
+        <li>Easy onboarding, especially for BYOD where pushing a client cert is hard</li>
+        <li>Works with existing AD passwords, no parallel credential lifecycle</li>
+        <li>Cheap and fast to deploy at scale</li>
+      </ul>
+
+      <p style="margin-top:14px;"><strong>Weaknesses</strong></p>
+      <ul>
+        <li><strong>Rogue RADIUS attack surface</strong>. If the supplicant is misconfigured (no CA trust enforcement, no server name validation), an attacker can stand up a fake RADIUS server, capture the MSCHAPv2 challenge/response, and crack it offline to recover the password</li>
+        <li><strong>Passwords are crackable offline</strong>. MSCHAPv2 is a known-weak hash protocol. Capture once, brute force forever</li>
+        <li><strong>User-typed credentials</strong>. Subject to phishing, shoulder surfing, weak passwords, reuse across services</li>
+        <li><strong>Password expiry causes mass WiFi failures</strong>. Every password rotation cycle generates support tickets</li>
+        <li><strong>Server cert validation is the only thing keeping it secure</strong>. If clients are not enforcing it (and many supplicants default to permissive), the whole method falls apart</li>
+      </ul>
 
       <p style="margin-top:14px;"><strong>Common NPS gotcha</strong></p>
       <p>On the policy Overview tab, the "Access permission" radio must be set to "Grant access". You can have perfect Conditions, Constraints, and Settings and the policy will still deny if this is wrong. Catches everyone exactly once.</p>
-
-      <p style="margin-top:14px;"><strong>Related concepts</strong></p>
-      <ul>
-        <li><strong>MAB (MAC Authentication Bypass)</strong> - fallback for devices that don't speak 802.1X (printers, IoT, badge readers). Same RADIUS server, different policy that matches on Calling-Station-Id (MAC) instead of EAP.</li>
-        <li><strong>CoA (Change of Authorization)</strong> - RFC 5176, UDP 3799. Lets NPS push session changes (force re-auth, terminate, bounce port) without the client reconnecting. Useful for posture, quarantine, role changes.</li>
-        <li><strong>EAP type variants</strong> - EAP-TLS (cert both sides, no passwords), EAP-TTLS (server cert + inner whatever), PEAP-MSCHAPv2 (server cert + inner password, the variant this doc covers). The outer wrapper changes, the RADIUS plumbing is identical.</li>
-      </ul>
 
       <p style="margin-top:14px;"><strong>Debug cheat sheet</strong></p>
       <div class="table-wrap">
         <table>
           <thead><tr><th>Symptom</th><th>Likely cause</th><th>Where to look</th></tr></thead>
           <tbody>
-            <tr><td>No reply from NPS</td><td>UDP 1812 blocked or wrong shared secret</td><td>Firewall, NPS RADIUS client config</td></tr>
+            <tr><td>No reply from RADIUS</td><td>UDP 1812 blocked or wrong shared secret</td><td>Firewall, RADIUS client config</td></tr>
             <tr><td>Access-Reject with no reason</td><td>Wrong shared secret or AP not registered as RADIUS client</td><td>NPS Event Viewer event 6273</td></tr>
-            <tr><td>Many Challenges then Reject</td><td>Cert validation failure</td><td>NPS cert trust chain, client trust store</td></tr>
-            <tr><td>Auth succeeds, wrong VLAN</td><td>Wrong Tunnel-Assignment-Id value or no AP rule match</td><td>NPS policy attributes, AP rule list</td></tr>
+            <tr><td>Many Challenges then Reject</td><td>Cert validation failure</td><td>RADIUS cert trust chain, client trust store</td></tr>
+            <tr><td>Auth succeeds, wrong VLAN</td><td>Wrong Tunnel-Assignment-Id value or no AP rule match</td><td>RADIUS policy attributes, AP rule list</td></tr>
             <tr><td>Session drops at fixed interval</td><td>Session-Timeout reauth failing</td><td>Look for reauth attempt in capture</td></tr>
-            <tr><td>Auth works, no accounting</td><td>UDP 1813 blocked or NAS not configured for accounting</td><td>Firewall, NPS accounting client config</td></tr>
+            <tr><td>Auth works, no accounting</td><td>UDP 1813 blocked or NAS not configured for accounting</td><td>Firewall, accounting client config</td></tr>
           </tbody>
         </table>
       </div>
 
       <p style="margin-top:14px;"><strong>Capture and log sources</strong></p>
       <ul>
-        <li>Wireshark on NPS NIC - cleanest view of all RADIUS traffic, filter: <code>radius</code></li>
-        <li>NPS Event Viewer - Custom Views &gt; Server Roles &gt; Network Policy and Access Services. Event 6272 = granted, 6273 = denied. Shows matched policy name and reason</li>
-        <li>NPS log files - <code>%SystemRoot%\System32\LogFiles\</code> in IAS format</li>
-        <li>SPAN or mirror on AP uplink - if NPS access not available</li>
+        <li>Wireshark on RADIUS NIC, filter <code>radius</code>. Cleanest view of all RADIUS traffic</li>
+        <li>NPS Event Viewer. Custom Views &gt; Server Roles &gt; Network Policy and Access Services. Event 6272 = granted, 6273 = denied. Shows matched policy name and reason</li>
+        <li>NPS log files in <code>%SystemRoot%\System32\LogFiles\</code> in IAS format</li>
+        <li>SPAN or mirror on AP uplink if RADIUS access not available</li>
       </ul>
-      <p>Combine packet capture (what flew on the wire) with NPS event log (which policy NPS picked and why) for full diagnosis.</p>
+      <p>Combine packet capture (what flew on the wire) with RADIUS event log (which policy was picked and why) for full diagnosis.</p>
 
       <p style="margin-top:14px;"><strong>Reference values</strong></p>
       <div class="table-wrap">
@@ -2097,9 +2111,189 @@ end</pre>
             <tr><td>Tunnel-Type for VLAN</td><td>13</td></tr>
             <tr><td>Tunnel-Medium-Type for IEEE-802</td><td>6</td></tr>
             <tr><td>NAS-Port-Type for wireless</td><td>19</td></tr>
-            <tr><td>RFC for protocol</td><td>2865 (auth), 2866 (accounting)</td></tr>
+            <tr><td>RFC for RADIUS</td><td>2865 (auth), 2866 (accounting)</td></tr>
             <tr><td>RFC for tunnel attributes</td><td>2868</td></tr>
             <tr><td>RFC for CoA</td><td>5176</td></tr>
+            <tr><td>RFC for EAP</td><td>3748</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </details>
+
+  <details class="collapse">
+    <summary>802.1X · EAP-TLS</summary>
+    <div class="collapse-body">
+      <p><strong>What it is</strong></p>
+      <p>A certificate-based EAP method. Both sides present certificates. The RADIUS server validates the client's certificate. The client validates the RADIUS server's certificate. The TLS handshake itself is the authentication. No password is ever exchanged.</p>
+      <p>Server proves itself with a cert. Client proves itself with a cert. Mutual cert authentication.</p>
+
+      <p style="margin-top:14px;"><strong>The three players</strong></p>
+      <p>Same as PEAP-MSCHAPv2. Supplicant, authenticator, authentication server. EAP runs end-to-end between supplicant and RADIUS. The NAS is a relay.</p>
+
+      <p style="margin-top:14px;"><strong>What each side needs</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Side</th><th>Requirement</th></tr></thead>
+          <tbody>
+            <tr><td>RADIUS server</td><td>Server certificate trusted by clients, plus the CA chain to validate client certs</td></tr>
+            <tr><td>Client</td><td>Client certificate, private key, and trust of the RADIUS server's CA</td></tr>
+            <tr><td>Backend</td><td>AD account or device object the cert can be mapped to</td></tr>
+            <tr><td>PKI</td><td>Full PKI: issuing CA, cert enrolment automation, revocation mechanism (CRL or OCSP)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="margin-top:14px;"><strong>End-to-end auth flow</strong></p>
+      <ol>
+        <li>Client connects to SSID</li>
+        <li>AP wraps EAP-Identity in Access-Request (code 1) to RADIUS on UDP 1812</li>
+        <li>RADIUS replies with Access-Challenge (code 11) containing EAP-TLS Start</li>
+        <li>Client sends TLS ClientHello inside Access-Request</li>
+        <li>RADIUS replies with ServerHello, server Certificate, CertificateRequest, ServerHelloDone</li>
+        <li>Client validates server cert against its trusted CA store</li>
+        <li>Client sends its own Certificate, ClientKeyExchange, CertificateVerify (signs the handshake with its private key, proving possession), ChangeCipherSpec, Finished</li>
+        <li>RADIUS validates the client certificate: chains to a trusted CA, not expired, not revoked (CRL or OCSP check), CertificateVerify signature valid (proves client holds the private key)</li>
+        <li>RADIUS maps the certificate to an identity (cert-to-account mapping, usually via UPN or DNS name in the Subject Alternative Name)</li>
+        <li>RADIUS queries AD via LDAP for the mapped account's group memberships</li>
+        <li>RADIUS walks Network Policies top to bottom, first match wins</li>
+        <li>Matched policy injects tunnel attributes into reply</li>
+        <li>RADIUS sends Access-Accept (code 2) with Tunnel-Type, Tunnel-Medium-Type, Tunnel-Assignment-Id, MS-MPPE keys</li>
+        <li>AP reads Tunnel-Assignment-Id, matches its VLAN Assignment Rule, bridges client into assigned VLAN</li>
+        <li>AP uses MS-MPPE keys to derive PMK for WPA2 4-way handshake</li>
+        <li>Client gets DHCP from the assigned VLAN's scope</li>
+        <li>AP sends Accounting-Request Start (code 4) on UDP 1813</li>
+        <li>Periodic Interim-Updates, Stop on disconnect</li>
+      </ol>
+
+      <p style="margin-top:14px;"><strong>What is different from PEAP-MSCHAPv2</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Stage</th><th>PEAP-MSCHAPv2</th><th>EAP-TLS</th></tr></thead>
+          <tbody>
+            <tr><td>TLS tunnel built</td><td>Yes, to protect inner method</td><td>Yes, and it IS the auth</td></tr>
+            <tr><td>Server proves itself</td><td>Server cert</td><td>Server cert</td></tr>
+            <tr><td>Client proves itself</td><td>Password inside the tunnel</td><td>Client cert + CertificateVerify signature</td></tr>
+            <tr><td>Inner method</td><td>MSCHAPv2</td><td>None, the handshake is the auth</td></tr>
+            <tr><td>Credential on the wire</td><td>Encrypted password hash</td><td>Nothing secret transmitted</td></tr>
+            <tr><td>Backend validation</td><td>AD checks password</td><td>RADIUS validates cert, maps to AD account</td></tr>
+            <tr><td>Group to VLAN mapping</td><td>RADIUS policy, identical</td><td>RADIUS policy, identical</td></tr>
+            <tr><td>MS-MPPE keys delivered</td><td>Yes</td><td>Yes</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:10px;">The auth half changes, the policy half does not. Tunnel attributes, VLAN assignment, MS-MPPE key delivery, accounting, all identical.</p>
+
+      <p style="margin-top:14px;"><strong>Device certs vs user certs</strong></p>
+      <p>This is the design decision that bites schools and corporate fleets. The cert determines what the network sees.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Cert type</th><th>Lives in</th><th>What gets authenticated</th><th>When auth happens</th></tr></thead>
+          <tbody>
+            <tr><td>Device (machine) cert</td><td>Local Machine cert store</td><td>The laptop</td><td>At boot, before any user logs in</td></tr>
+            <tr><td>User cert</td><td>Current User cert store</td><td>The logged-in user</td><td>When the user logs in</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:10px;">Implications for VLAN assignment:</p>
+      <ul>
+        <li><strong>Device cert</strong>: VLAN follows the laptop. A staff laptop stays on the staff VLAN regardless of who logs in. If a teacher hands the laptop to a student, the student lands on the staff VLAN. This is by design, not a bug</li>
+        <li><strong>User cert</strong>: VLAN follows the user. When a different user logs in, the supplicant re-authenticates with the new user's cert and lands on a different VLAN</li>
+      </ul>
+      <p>User certs solve the lending scenario but introduce operational cost: every user needs a cert on every device they use, provisioning is per-user-per-device, and the chicken-and-egg of "first login on a new device needs cert enrolment but the network needs the cert" usually requires a wired bridge or a staged onboarding flow.</p>
+      <p>The common compromise for managed-fleet environments: device certs for the standard fleet, plus a documented policy that loaner devices come from the appropriate VLAN's pool, not by lending across user categories.</p>
+
+      <p style="margin-top:14px;"><strong>Cert-to-account mapping</strong></p>
+      <p>When EAP-TLS succeeds, the RADIUS server has a validated certificate but no AD account yet. Mapping the cert to an account is what lets policy evaluation proceed.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Method</th><th>How it works</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>UPN in SAN</td><td>Cert's Subject Alternative Name contains a UPN (user@domain.com), RADIUS looks up the AD user with that UPN</td><td>Most common for user certs</td></tr>
+            <tr><td>DNS name in SAN</td><td>Cert's SAN contains the device DNS name, RADIUS looks up the AD computer object</td><td>Most common for device certs</td></tr>
+            <tr><td>Explicit mapping</td><td>AD account has an <code>altSecurityIdentities</code> attribute with the cert's issuer and serial</td><td>Used for high-assurance environments</td></tr>
+            <tr><td>Implicit mapping</td><td>RADIUS derives the account from cert fields without explicit linkage</td><td>Default for many setups</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:10px;">Cert-to-account mapping is where many EAP-TLS deployments quietly fail. Symptoms: cert validates fine, but RADIUS rejects because it cannot find a matching account. Look at NPS Event 6273 reason codes.</p>
+
+      <p style="margin-top:14px;"><strong>Strengths</strong></p>
+      <ul>
+        <li><strong>No password on the wire, ever</strong>. Removes phishing, password spray, MSCHAPv2 cracking, password expiry headaches</li>
+        <li><strong>Mutual authentication enforced by the protocol</strong>. Cannot be silently weakened by client misconfiguration the way PEAP can</li>
+        <li><strong>Private key never leaves the device</strong>. Often hardware-backed (TPM), so even stealing the device does not yield extractable credentials</li>
+        <li>Cleanest path for zero-trust and posture-based access</li>
+      </ul>
+
+      <p style="margin-top:14px;"><strong>Weaknesses</strong></p>
+      <ul>
+        <li><strong>PKI is real infrastructure</strong>. Issuing CA, enrolment automation, renewal lifecycle, revocation. None of it is free</li>
+        <li><strong>Onboarding friction</strong>. Every device needs a cert before it can connect. BYOD and unmanaged devices are painful</li>
+        <li><strong>Cert expiry causes silent dropouts</strong>. If renewal automation breaks, devices fall off the network with no obvious cause</li>
+        <li><strong>Non-domain devices need a separate path</strong>. Printers, IoT, AV gear usually fall back to MAB or a PSK SSID</li>
+        <li><strong>Troubleshooting is harder</strong>. Debugging PKI chains, revocation reachability, SAN mismatches, clock skew, cert-to-account mapping</li>
+      </ul>
+
+      <p style="margin-top:14px;"><strong>Common deployment patterns</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Environment</th><th>Typical EAP method</th></tr></thead>
+          <tbody>
+            <tr><td>Managed Intune fleet (corporate / school staff and students)</td><td>EAP-TLS with device certs via SCEP or PKCS profiles</td></tr>
+            <tr><td>BYOD / personal devices</td><td>PEAP-MSCHAPv2 or a separate PSK SSID with portal onboarding</td></tr>
+            <tr><td>Printers, IoT, AV</td><td>MAB (MAC Authentication Bypass) into restricted VLAN</td></tr>
+            <tr><td>Guest WiFi</td><td>PSK or captive portal, no 802.1X</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:10px;">Pure-EAP-TLS-everywhere designs are rare outside high-security environments. Most real deployments mix EAP-TLS for managed devices with PEAP or MAB for everything else.</p>
+
+      <p style="margin-top:14px;"><strong>SCEPman and RADIUSaaS specifics</strong></p>
+      <p>When using cloud-based RADIUS like RADIUSaaS with SCEPman issuing certs via Intune:</p>
+      <ul>
+        <li>SCEPman acts as the issuing CA, certs are deployed to devices via Intune SCEP profiles</li>
+        <li>RADIUSaaS validates the cert chain and provides the RADIUS endpoint reachable over RadSec (RADIUS over TLS, TCP 2083) from the APs</li>
+        <li>Cert-to-account mapping happens against Entra ID rather than on-prem AD</li>
+        <li>VLAN assignment via Tunnel-Private-Group-Id or Tunnel-Assignment-Id works the same way</li>
+      </ul>
+      <p>Product capabilities change, verify current SCEPman and RADIUSaaS docs before committing a design.</p>
+
+      <p style="margin-top:14px;"><strong>Debug cheat sheet (EAP-TLS specific)</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Symptom</th><th>Likely cause</th><th>Where to look</th></tr></thead>
+          <tbody>
+            <tr><td>Client never connects, no auth attempt</td><td>No client cert provisioned, or supplicant not configured for EAP-TLS</td><td>Client cert store, supplicant config</td></tr>
+            <tr><td>Auth fails immediately after server cert</td><td>Client cert not trusted by RADIUS, or cert expired</td><td>RADIUS server CA chain config</td></tr>
+            <tr><td>Auth fails after client cert sent</td><td>Cert-to-account mapping failure, or revocation check failed</td><td>NPS Event 6273, CRL/OCSP reachability</td></tr>
+            <tr><td>Cert valid but no group assignment</td><td>AD account exists but not in any group the policy matches</td><td>AD group membership, policy conditions</td></tr>
+            <tr><td>Random intermittent failures</td><td>Clock skew, CRL fetch timeout, expired intermediate CA</td><td>Time sync, CRL distribution points</td></tr>
+            <tr><td>Works on Windows, fails on macOS / iOS</td><td>Supplicant cert validation differences, SAN format requirements</td><td>Apple requires SAN, not just Subject CN</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="margin-top:14px;"><strong>Related concepts</strong></p>
+      <ul>
+        <li><strong>MAB (MAC Authentication Bypass)</strong> - fallback for devices that cannot do 802.1X. Same RADIUS server, different policy that matches on Calling-Station-Id (MAC) instead of EAP</li>
+        <li><strong>CoA (Change of Authorization)</strong> - RFC 5176, UDP 3799. RADIUS pushes session changes (force re-auth, terminate, bounce port) without the client reconnecting. Useful for posture, quarantine, role changes</li>
+        <li><strong>RadSec</strong> - RADIUS over TLS, TCP 2083. Replaces UDP plus shared-secret with a TLS tunnel. Used by RADIUSaaS and any cloud RADIUS service where AP-to-server traverses the public internet</li>
+        <li><strong>EAP-TTLS</strong> - similar to PEAP, server cert + inner method, but the inner method is more flexible. Rare in Microsoft shops, more common in mixed environments</li>
+      </ul>
+
+      <p style="margin-top:14px;"><strong>Reference values</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Item</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td>RFC for EAP-TLS</td><td>5216</td></tr>
+            <tr><td>RFC for EAP</td><td>3748</td></tr>
+            <tr><td>RFC for RADIUS</td><td>2865</td></tr>
+            <tr><td>RadSec port</td><td>TCP 2083</td></tr>
+            <tr><td>CoA port</td><td>UDP 3799</td></tr>
+            <tr><td>Tunnel-Type for VLAN</td><td>13</td></tr>
+            <tr><td>Tunnel-Medium-Type for IEEE-802</td><td>6</td></tr>
           </tbody>
         </table>
       </div>
