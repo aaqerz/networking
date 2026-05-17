@@ -1914,172 +1914,190 @@ end</pre>
       <p>VXLAN is a Layer 2 overlay over a Layer 3 IP network that encapsulates Ethernet frames using UDP and identifies segments using a 24-bit VNI.</p>
     </div>
   </details>
+  
  <details class="collapse">
     <summary>FortiOS Packet Flow Architecture</summary>
-    <div class="collapse-body">
-      <p><strong>1. Executive Architecture Overview</strong></p>
-      <p>To maintain deterministic performance and low latency across enterprise deployments, FortiOS utilizes an architecture called <strong>Parallel Path Processing (PPP)</strong>. When a packet arrives at an interface, FortiGate determines whether the traffic matches an active session in the stateful session table or requires a new session evaluation through the kernel.</p>
+    <div class="collapse-body" style="padding-top: 12px;">
       
-      <div class="code-wrap" style="margin-bottom: 14px;">
-        <pre class="code-block">[ Ingress Packet Flow ] -> [ Kernel Processing Layer ] -> [ UTM/NGFW Inspection ] -> [ Egress Packet Flow ]</pre>
+      <div style="margin-bottom: 28px;">
+        <p style="margin-bottom: 16px;"><strong style="font-size: 16px; color: var(--text); display: block; margin-bottom: 8px;">1. Architecture Overview</strong></p>
+        <p style="margin-bottom: 16px;">To maintain deterministic performance and low latency across enterprise deployments, FortiOS utilizes an architecture called <strong>Parallel Path Processing (PPP)</strong>. When a packet arrives at an interface, FortiGate determines whether the traffic matches an active session in the stateful session table or requires a new session evaluation through the kernel.</p>
+        
+        <div class="code-wrap" style="margin: 20px 0;">
+          <pre class="code-block">[ Ingress Packet Flow ] -> [ Kernel Processing Layer ] -> [ UTM/NGFW Inspection ] -> [ Egress Packet Flow ]</pre>
+        </div>
+
+        <p style="margin-bottom: 12px;">Processing splits into two primary paths:</p>
+        <ul style="margin-bottom: 16px;">
+          <li style="margin-bottom: 10px;"><strong>The Slow Path (Kernel Session Creation):</strong> The first packet of a new flow traverses the complete ingress, routing, and security policy stack to instantiate an entry in the session table.</li>
+          <li style="margin-bottom: 10px;"><strong>The Fast Path (ASIC Acceleration):</strong> Subsequent packets matching an established session bypass the core routing and policy evaluation engines, offloading directly to Network Processors (NP6/NP7) or Content Processors (CP9/CP10).</li>
+        </ul>
       </div>
 
-      <p>Processing splits into two primary paths:</p>
-      <ul>
-        <li><strong>The Slow Path (Kernel Session Creation):</strong> The first packet of a new flow traverses the complete ingress, routing, and security policy stack to instantiate an entry in the session table.</li>
-        <li><strong>The Fast Path (ASIC Acceleration):</strong> Subsequent packets matching an established session bypass the core routing and policy evaluation engines, offloading directly to Network Processors (NP6/NP7) or Content Processors (CP9/CP10).</li>
-      </ul>
-
-      <p style="margin-top: 14px;"><strong>2. Ingress Packet Flow (Physical to Link Layer)</strong></p>
-      <ol>
-        <li><strong>Network Interface &amp; Driver Layer:</strong> The network interface card (NIC) or NP processor validates physical layer integrity.</li>
-        <li><strong>IP Integrity Header Checking:</strong> FortiOS performs automatic validation checks. Packets with invalid checksums, malformed structures, or protocol header length mismatches (TCP, UDP, ICMP, SCTP, or GRE) are dropped immediately.</li>
-        <li><strong>Stateful Session Lookup:</strong> The FortiGate checks the packet's 5-tuple (Source IP, Destination IP, Source Port, Destination Port, Protocol) against the master session table.
-          <ul>
-            <li><em>Match Found:</em> The packet transitions directly to UTM/NGFW Inspection or Egress Packet Flow depending on acceleration status.</li>
-            <li><em>No Match:</em> The packet is flagged as a new flow and enters the slow path.</li>
-          </ul>
-        </li>
-        <li><strong>DoS Policy Inspection:</strong> Before consuming CPU cycles in the kernel, traffic is evaluated against configured IPv4 or IPv6 DoS policies. Volumetric checks (such as SYN floods, UDP floods, or ICMP sweeps) are enforced here at the hardware or driver level.</li>
-        <li><strong>IPsec VPN Decryption:</strong> If the incoming packet matches a configured IPsec tunnel, the IPsec engine decrypts it (accelerated by CP9/CP10). The unencrypted inner packet is then re-injected into the pipeline.</li>
-        <li><strong>Admission Control:</strong> FortiOS verifies that the packet source or destination does not match the system quarantine list and evaluates captive portal authentication criteria if enforced.</li>
-      </ol>
-
-      <p style="margin-top: 14px;"><strong>3. Kernel Processing Layer (Routing &amp; The Gatekeeper Architecture)</strong></p>
-      <p>For a new session, FortiOS must determine the egress path before evaluating firewall privileges. The Forwarding Information Base (FIB) and SD-WAN rules are deeply intertwined, with the FIB acting as the ultimate gatekeeper.</p>
-      <ol>
-        <li><strong>Destination NAT (DNAT / Virtual IP Lookup):</strong> FortiOS evaluates Virtual IPs (VIPs) early in the kernel. If the destination IP matches a VIP configuration, the packet destination is rewritten. Subsequent routing and firewall policy lookups depend entirely on this post-NAT destination IP.</li>
-        <li><strong>Core Route Lookup Sequence:</strong> The kernel evaluates routing in a strict, deterministic sequence:
-          <ul>
-            <li><strong>Regular Policy Routes (PBR):</strong> PBR entries are always checked first. If a manually created Policy Route matches the traffic and contains a valid, reachable gateway, FortiGate routes the traffic immediately. When a PBR match occurs, both the SD-WAN engine and the standard routing table (FIB) are completely bypassed.</li>
-            <li><strong>The FIB Lookup (The Gatekeeper):</strong> If no PBR rule matches, the FortiGate executes a standard Routing Table (FIB) lookup for the destination IP before any SD-WAN logic is considered.
-              <ul>
-                <li><em>Route points to a NON-SD-WAN interface:</em> The FortiGate completely ignores all SD-WAN rules and routes the traffic directly out of that specific physical or logical interface. This mechanism ensures internal LAN-to-LAN, inter-VLAN, or out-of-band management traffic is never accidentally hijacked by SD-WAN configurations.</li>
-                <li><em>Route points to an SD-WAN member:</em> If the best matching route (such as a default 0.0.0.0/0 route) points to the logical SD-WAN zone or a member interface, only then does the firewall unlock and evaluate the SD-WAN rule base.</li>
-              </ul>
-            </li>
-            <li><strong>SD-WAN Rules Evaluation:</strong> Once the FIB confirms the traffic belongs to the SD-WAN infrastructure, the engine evaluates your custom SD-WAN service rules sequentially from top to bottom. It reviews application signatures, user groups, and live performance metrics (latency, jitter, packet loss via Performance SLA probes) to select the optimal physical member interface.
-              <ul>
-                <li><em>Crucial Caveat:</em> The specific SD-WAN member selected by a rule must also possess a valid route to the destination in the routing table. If a valid route for that specific member does not exist, the firewall skips that member and evaluates the next one in the rule strategy.</li>
-              </ul>
-            </li>
-            <li><strong>The Implicit SD-WAN Rule (FIB Fallback):</strong> If the traffic hits the SD-WAN engine but fails to match any user-defined, custom SD-WAN rules, it falls through to the "Implicit Rule" at the bottom of the stack. This rule hands control back to the FIB, load-balancing traffic across the available SD-WAN member interfaces using standard Equal-Cost Multi-Path (ECMP) routing based on your configured implicit algorithm.</li>
-          </ul>
-        </li>
-        <li><strong>Reverse Path Forwarding (RPF) Check:</strong> To prevent spoofing and asymmetric routing complications, FortiGate cross-references the source IP against the routing table.
-          <ul>
-            <li><em>Strict RPF:</em> The packet is dropped if the optimal return route to the source IP does not match the exact ingress interface the packet arrived on.</li>
-            <li><em>Loose RPF:</em> The packet is allowed if a valid route to the source IP exists via any interface on the system.</li>
-          </ul>
-        </li>
-      </ol>
-
-      <p style="margin-top: 14px;"><strong>4. Firewall Policy &amp; Session Management</strong></p>
-      <ol>
-        <li><strong>Firewall Policy Matching (iprope table lookup):</strong> The kernel scans the firewall policy list sequentially inside the internal security policy table (known as the <code>iprope</code> table). It evaluates match criteria based on source/destination interfaces, source/destination IPs (or Internet Service Database / ISDB objects), service ports, and user schedules.</li>
-        <li><strong>Implicit Deny:</strong> If the packet fails to match any user-defined policy in the <code>iprope</code> table, it hits Policy 0 (the implicit deny rule) and is dropped.</li>
-        <li><strong>Session Helpers / Application Layer Gateways (ALGs):</strong> For complex protocols that embed IP/port information within their payloads (such as SIP, FTP, TFTP, or H.323), FortiOS applies built-in session helpers to open dynamic pinholes for secondary data channels.</li>
-        <li><strong>Session Instantiation:</strong> The kernel allocates an entry in the master session table, transitions the state from dirty to validated, and writes the routing, NAT, and security profile application tags into the session structure.</li>
-      </ol>
-
-      <p style="margin-top: 14px;"><strong>5. Security Profile Processing (UTM/NGFW Engine)</strong></p>
-      <p>If the matching firewall policy contains security profiles, the packet is directed to the inspection engines. FortiOS executes this using two distinct architectural models based on policy configuration.</p>
-      
-      <div class="table-wrap" style="margin-bottom: 14px;">
-        <table>
-          <thead>
-            <tr>
-              <th>Feature / Step</th>
-              <th>Flow-Based Inspection Mode</th>
-              <th>Proxy-Based Inspection Mode</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><strong>Official Engine Core</strong></td>
-              <td><code>IPS Engine (IPS Decoders &amp; IPSA Engine)</code></td>
-              <td><code>WAD Daemon (Worker Application Daemon)</code></td>
-            </tr>
-            <tr>
-              <td><strong>Memory Footprint</strong></td>
-              <td>Low (packets processed stream-style on the fly)</td>
-              <td>High (buffers connections, acts as termination point)</td>
-            </tr>
-            <tr>
-              <td><strong>Connection Handling</strong></td>
-              <td>Original TCP handshake passes through to destination.</td>
-              <td>Connection is split into two independent segments (Client-to-FGT and FGT-to-Server).</td>
-            </tr>
-            <tr>
-              <td><strong>Inspection Mechanism</strong></td>
-              <td>Pattern matching occurs inside packet streams as they transit.</td>
-              <td>Files/payloads are fully reassembled in memory before inspection.</td>
-            </tr>
-          </tbody>
-        </table>
+      <div style="margin-top: 36px; margin-bottom: 28px;">
+        <p style="margin-bottom: 12px;"><strong style="font-size: 16px; color: var(--text); display: block; margin-bottom: 6px;">Phase 1: Ingress Packet Flow (Physical to Link Layer)</strong></p>
+        <p style="margin-bottom: 16px;">The packet enters the physical interface transceiver and is placed into the Rx FIFO queue for initial hardware validation baseline checks.</p>
+        <ul>
+          <li style="margin-bottom: 12px;"><strong>Network Interface &amp; Driver Layer:</strong> The network interface card (NIC) or NP processor validates physical layer integrity. Packets with invalid checksums, malformed structures, or protocol header length mismatches (TCP, UDP, ICMP, SCTP, or GRE) are dropped immediately.</li>
+          <li style="margin-bottom: 12px;"><strong>Stateful Session Lookup:</strong> The FortiGate checks the packet's 5-tuple (Source IP, Destination IP, Source Port, Destination Port, Protocol) against the master session table. If a match is found, the packet transitions directly to UTM/NGFW Inspection or Egress processing depending on acceleration status. If no match is found, the packet is flagged as a new flow.</li>
+          <li style="margin-bottom: 12px;"><strong>DoS Policy Inspection:</strong> Before consuming CPU cycles in the kernel, traffic is evaluated against configured IPv4 or IPv6 DoS policies. Volumetric checks (such as SYN floods, UDP floods, or ICMP sweeps) are enforced here at the hardware or driver level.</li>
+          <li style="margin-bottom: 12px;"><strong>IPsec VPN Decryption:</strong> If the incoming packet matches a configured IPsec tunnel, the IPsec engine decrypts it (accelerated by CP9/CP10). The unencrypted inner packet is then re-injected into the pipeline.</li>
+          <li style="margin-bottom: 12px;"><strong>Admission Control:</strong> FortiOS verifies that the packet source or destination does not match the system quarantine list and evaluates captive portal authentication criteria if enforced.</li>
+        </ul>
       </div>
 
-      <p><strong>Security Engine Sequence (Flow Mode):</strong></p>
-      <ul>
-        <li><strong>SSL/TLS Decryption:</strong> If configured, the built-in CP9/CP10 processor intercepts the TLS handshake for Certificate or Deep Inspection.</li>
-        <li><strong>IPS Engine Decoders:</strong> The IPS engine applies specific decoders to identify the exact application protocol and format the stream data.</li>
-        <li><strong>Parallel Inspection Pass:</strong> IPS signatures, Application Control, Local URL Filtering, and Botnet checking happen simultaneously in a single pass accelerated via Content Processors.</li>
-        <li><strong>Flow-Based AntiVirus:</strong> The AV engine loaded by the IPS process performs stream-based scanning against known malware hashes without waiting for the complete file to download.</li>
-      </ul>
+      <div style="margin-top: 36px; margin-bottom: 28px;">
+        <p style="margin-bottom: 12px;"><strong style="font-size: 16px; color: var(--text); display: block; margin-bottom: 6px;">Phase 2: Kernel Processing Layer (Routing &amp; The Gatekeeper Architecture)</strong></p>
+        <p style="margin-bottom: 16px;">For a new session, FortiOS must determine the egress path before evaluating firewall privileges. The Forwarding Information Base (FIB) and SD-WAN rules are deeply intertwined, with the FIB acting as the ultimate gatekeeper.</p>
+        
+        <p style="margin-bottom: 12px;"><strong>Order of Evaluation Sequence:</strong></p>
+        <ol style="margin-bottom: 20px;">
+          <li style="margin-bottom: 12px;"><strong>Destination NAT (DNAT / Virtual IP Lookup):</strong> FortiOS evaluates Virtual IPs (VIPs) early in the kernel. If the destination IP matches a VIP configuration, the packet destination is rewritten. Subsequent routing and firewall policy lookups depend entirely on this post-NAT destination IP.</li>
+          <li style="margin-bottom: 12px;"><strong>Regular Policy Routes (PBR):</strong> PBR entries are always checked first. If a manually created Policy Route matches the traffic and contains a valid, reachable gateway, FortiGate routes the traffic immediately. When a PBR match occurs, both the SD-WAN engine and the standard routing table (FIB) are completely bypassed.</li>
+          <li style="margin-bottom: 12px;"><strong>The FIB Lookup (The Gatekeeper):</strong> If no PBR rule matches, the FortiGate executes a standard Routing Table (FIB) lookup for the destination IP before any SD-WAN logic is considered.
+            <ul style="margin-top: 6px;">
+              <li style="margin-bottom: 8px;">If the best route points to a <strong>NON-SD-WAN interface</strong>, the FortiGate completely ignores all SD-WAN rules and routes the traffic directly out of that specific physical or logical interface. This protects internal LAN-to-LAN, inter-VLAN, or out-of-band management traffic from being accidentally hijacked by SD-WAN configurations.</li>
+              <li style="margin-bottom: 8px;">If the best route points to an <strong>SD-WAN member</strong> (such as a default 0.0.0.0/0 route pointing to the logical SD-WAN zone or a member interface), only then does the firewall unlock and evaluate the SD-WAN rule base.</li>
+            </ul>
+          </li>
+          <li style="margin-bottom: 12px;"><strong>SD-WAN Rules Evaluation:</strong> Once unlocked, the engine evaluates your custom SD-WAN service rules sequentially from top to bottom. It reviews application signatures, user groups, and live performance metrics (latency, jitter, packet loss via Performance SLA probes) to select the optimal physical member interface.
+            <ul style="margin-top: 6px;">
+              <li style="margin-bottom: 6px;"><em>Crucial Caveat:</em> The specific SD-WAN member selected by a rule must also possess a valid route to the destination in the routing table. If a valid route for that specific member does not exist, the firewall skips that member and evaluates the next one in the rule strategy.</li>
+            </ul>
+          </li>
+          <li style="margin-bottom: 12px;"><strong>The Implicit SD-WAN Rule (FIB Fallback):</strong> If the traffic hits the SD-WAN engine but fails to match any user-defined, custom SD-WAN rules, it falls through to the "Implicit Rule" at the bottom of the stack. This rule hands control back to the FIB, load-balancing traffic across the available SD-WAN member interfaces using standard Equal-Cost Multi-Path (ECMP) routing based on your configured implicit algorithm.</li>
+        </ol>
 
-      <p style="margin-top: 14px;"><strong>6. Egress Packet Flow (Data Link to Physical Layer)</strong></p>
-      <ol>
-        <li><strong>Source NAT (SNAT) Translation:</strong> The packet headers are modified at this post-processing stage. The source IP is rewritten to the configured IP pool or egress interface IP, and the source port is translated inside the NAT session tracking range.</li>
-        <li><strong>Forwarding &amp; Traffic Shaping (QoS):</strong> The packet is evaluated against Traffic Shaping policies. If interface bandwidth limits are breached, packets are queued, delayed, or dropped based on priority configurations.</li>
-        <li><strong>IPsec VPN Encapsulation:</strong> If the routing table dictates that the packet exit via an IPsec tunnel, the payload is encrypted (AES/3DES), an ESP header is prepended, and the packet is re-routed through the physical path toward the VPN gateway endpoint.</li>
-        <li><strong>Layer 2 Frame Assembly (ARP Lookup):</strong> The FortiGate updates the Layer 2 headers. It queries its ARP table for the MAC address of the next-hop gateway and updates the destination MAC address.</li>
-        <li><strong>Tx Queue and Transmission:</strong> The finalized frame is loaded into the interface Tx FIFO queue, converted into electrical or optical signals by the transceiver, and transmitted onto the wire.</li>
-      </ol>
-
-      <p style="margin-top: 14px;"><strong>7. Flow Engineering &amp; Diagnostics Field Reference</strong></p>
-      
-      <div class="card">
-        <div class="card-header"><div class="card-title">Physical Layer &amp; NIC Status Check</div></div>
-        <div class="card-body no-pad">
-          <div class="code-wrap">
-            <button class="copy-btn" data-copy-text="get hardware nic port1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
-            <pre class="code-block">get hardware nic &lt;port&gt;</pre>
-          </div>
+        <div class="note" style="margin: 20px 0;">
+          <strong>Reverse Path Forwarding (RPF) Check:</strong> To prevent spoofing and asymmetric routing complications, FortiGate cross-references the source IP against the routing table. <strong>Strict RPF</strong> drops the packet if the optimal return route to the source IP does not match the exact ingress interface the packet arrived on. <strong>Loose RPF</strong> allows the packet if a valid route to the source IP exists via any interface on the system.
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-header"><div class="card-title">Real-Time Kernel Packet Flow Trace</div></div>
-        <div class="card-body no-pad">
-          <div class="code-wrap">
-            <button class="copy-btn" data-copy-text="diagnose debug reset
+      <div style="margin-top: 36px; margin-bottom: 28px;">
+        <p style="margin-bottom: 12px;"><strong style="font-size: 16px; color: var(--text); display: block; margin-bottom: 6px;">Phase 3: Firewall Policy &amp; Session Management</strong></p>
+        <p style="margin-bottom: 16px;">With the ingress interface, egress interface, and post-NAT IP attributes established, the firewall determines access privileges.</p>
+        <ul>
+          <li style="margin-bottom: 12px;"><strong>Firewall Policy Matching (iprope table lookup):</strong> The kernel scans the firewall policy list sequentially inside the internal security policy table (known as the <code>iprope</code> table). It evaluates match criteria based on source/destination interfaces, source/destination IPs (or Internet Service Database / ISDB objects), service ports, and user schedules.</li>
+          <li style="margin-bottom: 12px;"><strong>Implicit Deny:</strong> If the packet fails to match any user-defined policy in the <code>iprope</code> table, it hits Policy 0 (the implicit deny rule) and is dropped.</li>
+          <li style="margin-bottom: 12px;"><strong>Session Helpers / Application Layer Gateways (ALGs):</strong> For complex protocols that embed IP/port information within their payloads (such as SIP, FTP, TFTP, or H.323), FortiOS applies built-in session helpers to open dynamic pinholes for secondary data channels.</li>
+          <li style="margin-bottom: 12px;"><strong>Session Instantiation:</strong> The kernel allocates an entry in the master session table, transitions the state from dirty to validated, and writes the routing, NAT, and security profile application tags into the session structure.</li>
+        </ul>
+      </div>
+
+      <div style="margin-top: 36px; margin-bottom: 28px;">
+        <p style="margin-bottom: 12px;"><strong style="font-size: 16px; color: var(--text); display: block; margin-bottom: 6px;">Phase 4: Security Profile Processing (UTM/NGFW Engine)</strong></p>
+        <p style="margin-bottom: 16px;">If the matching firewall policy contains security profiles, the packet is directed to the inspection engines. FortiOS executes this using two distinct architectural models based on policy configuration.</p>
+        
+        <div class="table-wrap" style="margin: 20px 0;">
+          <table>
+            <thead>
+              <tr>
+                <th>Feature / Step</th>
+                <th>Flow-Based Inspection Mode</th>
+                <th>Proxy-Based Inspection Mode</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>Official Engine Core</code></td>
+                <td>IPS Engine (IPS Decoders &amp; IPSA Engine)</td>
+                <td>WAD Daemon (Worker Application Daemon)</td>
+              </tr>
+              <tr>
+                <td><code>Memory Footprint</code></td>
+                <td>Low (packets processed stream-style on the fly)</td>
+                <td>High (buffers connections, acts as termination point)</td>
+              </tr>
+              <tr>
+                <td><code>Connection Handling</code></td>
+                <td>Original TCP handshake passes through to destination.</td>
+                <td>Connection is split into two independent segments (Client-to-FGT and FGT-to-Server).</td>
+              </tr>
+              <tr>
+                <td><code>Inspection Mechanism</code></td>
+                <td>Pattern matching occurs inside packet streams as they transit.</td>
+                <td>Files/payloads are fully reassembled in memory before inspection.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p style="margin-bottom: 12px;"><strong>Security Engine Sequence (Flow Mode):</strong></p>
+        <ol>
+          <li style="margin-bottom: 10px;"><strong>SSL/TLS Decryption:</strong> If configured, the built-in CP9/CP10 processor intercepts the TLS handshake for Certificate or Deep Inspection.</li>
+          <li style="margin-bottom: 10px;"><strong>IPS Engine Decoders:</strong> The IPS engine applies specific decoders to identify the exact application protocol and format the stream data.</li>
+          <li style="margin-bottom: 10px;"><strong>Parallel Inspection Pass:</strong> IPS signatures, Application Control, Local URL Filtering, and Botnet checking happen simultaneously in a single pass accelerated via Content Processors.</li>
+          <li style="margin-bottom: 10px;"><strong>Flow-Based AntiVirus:</strong> The AV engine loaded by the IPS process performs stream-based scanning against known malware hashes without waiting for the complete file to download.</li>
+        </ol>
+      </div>
+
+      <div style="margin-top: 36px; margin-bottom: 32px;">
+        <p style="margin-bottom: 12px;"><strong style="font-size: 16px; color: var(--text); display: block; margin-bottom: 6px;">Phase 5: Egress Packet Flow (Data Link to Physical Layer)</strong></p>
+        <p style="margin-bottom: 16px;">Once a packet is approved by the routing, policy, and security inspection engines, it enters the final phase before physical transmission.</p>
+        <ul>
+          <li style="margin-bottom: 12px;"><strong>Source NAT (SNAT) Translation:</strong> The packet headers are modified at this post-processing stage. The source IP is rewritten to the configured IP pool or egress interface IP, and the source port is translated inside the NAT session tracking range.</li>
+          <li style="margin-bottom: 12px;"><strong>Forwarding &amp; Traffic Shaping (QoS):</strong> The packet is evaluated against Traffic Shaping policies. If interface bandwidth limits are breached, packets are queued, delayed, or dropped based on priority configurations (such as Strict Priority or Guaranteed Bandwidth allocations).</li>
+          <li style="margin-bottom: 12px;"><strong>IPsec VPN Encapsulation:</strong> If the routing table dictates that the packet exit via an IPsec tunnel, the payload is encrypted (AES/3DES), an ESP header is prepended, and the packet is re-routed through the physical path toward the VPN gateway endpoint.</li>
+          <li style="margin-bottom: 12px;"><strong>Layer 2 Frame Assembly (ARP Lookup):</strong> The FortiGate updates the Layer 2 headers. It queries its ARP table for the MAC address of the next-hop gateway. The destination MAC is updated with the next-hop hardware address, and the source MAC is updated with the address of the egress physical interface.</li>
+          <li style="margin-bottom: 12px;"><strong>Tx Queue and Transmission:</strong> The finalized frame is loaded into the interface Tx FIFO queue, converted into electrical or optical signals by the transceiver, and transmitted onto the wire.</li>
+        </ul>
+      </div>
+
+      <div style="margin-top: 44px;">
+        <p style="margin-bottom: 16px;"><strong style="font-size: 16px; color: var(--text); display: block; margin-bottom: 4px;">Flow Engineering &amp; Diagnostics Field Reference</strong></p>
+        
+        <div class="card" style="margin-bottom: 20px;">
+          <div class="card-header">
+            <div class="card-title">Physical Layer &amp; NIC Status Check</div>
+            <span class="card-meta">FortiOS hardware nic</span>
+          </div>
+          <div class="card-body no-pad">
+            <div class="code-wrap">
+              <button class="copy-btn" data-copy-text="get hardware nic port1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+              <pre class="code-block">get hardware nic &lt;port&gt;</pre>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 20px;">
+          <div class="card-header">
+            <div class="card-title">Real-Time Kernel Packet Flow Trace</div>
+            <span class="card-meta">iprope trace</span>
+          </div>
+          <div class="card-body no-pad">
+            <div class="code-wrap">
+              <button class="copy-btn" data-copy-text="diagnose debug reset
 diagnose debug flow filter src 192.168.10.25
 diagnose debug flow filter dport 443
 diagnose debug flow show function-name enable
 diagnose debug flow show iprope enable
 diagnose debug flow trace start 100
 diagnose debug enable"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
-            <pre class="code-block">diagnose debug reset
+              <pre class="code-block">diagnose debug reset
 diagnose debug flow filter src &lt;ip&gt;
 diagnose debug flow filter dport &lt;port&gt;
 diagnose debug flow show function-name enable
 diagnose debug flow show iprope enable
 diagnose debug flow trace start 100
 diagnose debug enable</pre>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="card">
-        <div class="card-header"><div class="card-title">Bypass FastPath (Force Kernel Processing for Debugging)</div></div>
-        <div class="card-body no-pad">
-          <div class="code-wrap">
-            <button class="copy-btn" data-copy-text="config system npu
+        <div class="card" style="margin-bottom: 16px;">
+          <div class="card-header">
+            <div class="card-title">Bypass FastPath (Force Kernel Processing for Debugging)</div>
+            <span class="card-tag warn">diagnostic override</span>
+          </div>
+          <div class="card-body no-pad">
+            <div class="code-wrap">
+              <button class="copy-btn" data-copy-text="config system npu
     set fastpath disable
 end"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
-            <pre class="code-block">config system npu
+              <pre class="code-block">config system npu
     set fastpath disable
 end</pre>
+            </div>
           </div>
         </div>
       </div>
