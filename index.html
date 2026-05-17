@@ -2101,6 +2101,265 @@ end</pre>
           </div>
         </div>
       </div>
+	  
+<!-- ============================================================
+     FortiOS Packet Flow Architecture - Diagram (v4)
+     Drop this inside the <details class="collapse"> block.
+     Inherits your :root tokens automatically.
+     ============================================================ -->
+
+<div class="flow-diagram-wrap" style="margin: 32px 0 8px;">
+  <div class="flow-diagram-header" style="margin-bottom: 16px;">
+    <strong style="font-size: 16px; color: var(--text); display: block; margin-bottom: 4px;">Visual Flow Reference</strong>
+    <span style="color: var(--text-secondary); font-size: 13px;">Slow path on first packet, fast path on every packet after.</span>
+  </div>
+
+  <div class="flow-diagram-scroll" style="overflow-x: auto; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 16px;">
+    <svg width="100%" viewBox="0 0 1000 1980" role="img" xmlns="http://www.w3.org/2000/svg" style="min-width: 720px; display: block; margin: 0 auto;" aria-labelledby="flowTitle flowDesc">
+      <title id="flowTitle">FortiOS Packet Flow Architecture</title>
+      <desc id="flowDesc">Vertical flowchart of FortiOS packet processing showing ingress, kernel routing, firewall policy, UTM inspection and egress phases, with the ASIC fast path bypass branch.</desc>
+
+      <defs>
+        <marker id="fg-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+        <style>
+          .fg-label    { font-family: var(--sans); font-size: 14px; font-weight: 500; fill: var(--text); }
+          .fg-label-sm { font-family: var(--sans); font-size: 12px; font-weight: 500; fill: var(--text); }
+          .fg-sub      { font-family: var(--sans); font-size: 12px; fill: var(--text-secondary); }
+          .fg-sub-sm   { font-family: var(--sans); font-size: 11px; fill: var(--text-secondary); }
+          .fg-mini     { font-family: var(--sans); font-size: 10px; fill: var(--text-secondary); }
+          .fg-phase    { font-family: var(--sans); font-size: 12px; font-weight: 600; letter-spacing: 0.6px; }
+          .fg-tag      { font-family: var(--mono); font-size: 12px; font-weight: 600; }
+          .fg-title    { font-family: var(--sans); font-size: 16px; font-weight: 600; fill: var(--text); }
+          .fg-subtitle { font-family: var(--sans); font-size: 13px; fill: var(--text-secondary); }
+
+          .fg-box      { fill: var(--surface-hover); stroke: var(--border-strong); stroke-width: 0.5; }
+          .fg-box-soft { fill: var(--bg-elevated); stroke: var(--border-strong); stroke-width: 0.5; }
+          .fg-arr-line { stroke: var(--text-secondary); stroke-width: 1.5; fill: none; }
+
+          .fg-phase-sec    { fill: none; stroke: var(--accent); stroke-width: 0.5; stroke-dasharray: 5 5; opacity: 0.55; }
+          .fg-phase-route  { fill: none; stroke: var(--warn);   stroke-width: 0.5; stroke-dasharray: 5 5; opacity: 0.55; }
+          .fg-phase-label-sec   { fill: var(--accent); }
+          .fg-phase-label-route { fill: var(--warn); }
+
+          .fg-decision-sec   { fill: var(--surface); stroke: var(--accent); stroke-width: 1; }
+          .fg-decision-route { fill: var(--surface); stroke: var(--warn);   stroke-width: 1; }
+
+          .fg-good { fill: var(--success); }
+          .fg-bad  { fill: var(--accent); }
+          .fg-muted { fill: var(--text-secondary); }
+          .fg-stroke-good  { stroke: var(--success); }
+          .fg-stroke-bad   { stroke: var(--accent); }
+          .fg-stroke-muted { stroke: var(--text-secondary); }
+        </style>
+      </defs>
+
+      <!--  LAYOUT PLAN
+            =================================================
+            Main flow column:      x=420 (centered, boxes 240w)
+            Side-box column:       x=720 (start), boxes 200w
+            Fast-path rail:        x=920
+            Yes/No labels:         ABOVE the arrow, clear of it
+            =================================================  -->
+
+      <!-- Header -->
+      <text class="fg-title" x="40" y="40">FortiOS packet flow</text>
+      <text class="fg-subtitle" x="40" y="62">Slow path on first packet, fast path on every packet after</text>
+
+      <!-- Fast path legend (top-right) -->
+      <rect x="820" y="30" width="150" height="60" rx="6" fill="var(--bg)" stroke="var(--success)" stroke-width="0.5" stroke-dasharray="3 3"/>
+      <text style="font-family: var(--sans); font-size: 12px; font-weight: 600; fill: var(--success);" x="895" y="50" text-anchor="middle" dominant-baseline="central">FAST PATH</text>
+      <text class="fg-sub-sm" x="895" y="68" text-anchor="middle" dominant-baseline="central">Existing session</text>
+      <text class="fg-sub-sm" x="895" y="82" text-anchor="middle" dominant-baseline="central">ASIC offload</text>
+
+      <!-- Entry -->
+      <rect class="fg-box" x="350" y="100" width="140" height="44" rx="6"/>
+      <text class="fg-label" x="420" y="125" text-anchor="middle" dominant-baseline="central">Packet ingress</text>
+      <line class="fg-arr-line" x1="420" y1="144" x2="420" y2="174" marker-end="url(#fg-arrow)"/>
+
+      <!-- ============ PHASE 1: INGRESS ============ -->
+      <rect class="fg-phase-sec" x="60" y="184" width="600" height="240" rx="10"/>
+      <text class="fg-phase fg-phase-label-sec" x="80" y="210">PHASE 1 INGRESS</text>
+
+      <rect class="fg-box" x="300" y="228" width="240" height="50" rx="6"/>
+      <text class="fg-label" x="420" y="246" text-anchor="middle" dominant-baseline="central">NIC / driver validation</text>
+      <text class="fg-sub" x="420" y="265" text-anchor="middle" dominant-baseline="central">Rx FIFO, header and checksum checks</text>
+      <line class="fg-arr-line" x1="420" y1="278" x2="420" y2="298" marker-end="url(#fg-arrow)"/>
+
+      <!-- Decision: session lookup -->
+      <polygon class="fg-decision-sec" points="300,305 540,305 564,330 540,355 300,355 276,330"/>
+      <text class="fg-label" x="420" y="323" text-anchor="middle" dominant-baseline="central">Session table lookup</text>
+      <text class="fg-sub" x="420" y="342" text-anchor="middle" dominant-baseline="central">5-tuple match in session table</text>
+
+      <!-- "match" label ABOVE arrow, clear of line -->
+      <text class="fg-tag fg-good" x="640" y="318" text-anchor="middle" dominant-baseline="central">match (fast path)</text>
+      <!-- Fast path: arrow exits diamond, goes right to rail, then down to Packet egress -->
+      <path class="fg-stroke-good" d="M564 330 L920 330 L920 1952 L500 1952" fill="none" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#fg-arrow)"/>
+
+      <!-- "new flow" label next to main arrow -->
+      <text class="fg-tag fg-muted" x="450" y="370" text-anchor="start" dominant-baseline="central">new flow</text>
+      <line class="fg-arr-line" x1="420" y1="358" x2="420" y2="395" marker-end="url(#fg-arrow)"/>
+
+      <rect class="fg-box" x="300" y="402" width="240" height="34" rx="4"/>
+      <text class="fg-label-sm" x="420" y="419" text-anchor="middle" dominant-baseline="central">DoS policy, IPsec decrypt, admission</text>
+
+      <line class="fg-arr-line" x1="420" y1="436" x2="420" y2="466" marker-end="url(#fg-arrow)"/>
+
+      <!-- ============ PHASE 2: KERNEL ROUTING ============ -->
+      <rect class="fg-phase-route" x="60" y="476" width="600" height="640" rx="10"/>
+      <text class="fg-phase fg-phase-label-route" x="80" y="502">PHASE 2 KERNEL ROUTING (THE GATEKEEPER)</text>
+
+      <rect class="fg-box" x="300" y="520" width="240" height="50" rx="6"/>
+      <text class="fg-label" x="420" y="538" text-anchor="middle" dominant-baseline="central">DNAT / VIP lookup</text>
+      <text class="fg-sub" x="420" y="557" text-anchor="middle" dominant-baseline="central">Destination rewritten before routing</text>
+      <line class="fg-arr-line" x1="420" y1="570" x2="420" y2="592" marker-end="url(#fg-arrow)"/>
+
+      <!-- Decision: PBR -->
+      <polygon class="fg-decision-route" points="300,600 540,600 564,625 540,650 300,650 276,625"/>
+      <text class="fg-label" x="420" y="618" text-anchor="middle" dominant-baseline="central">Policy route (PBR) match?</text>
+      <text class="fg-sub" x="420" y="637" text-anchor="middle" dominant-baseline="central">Manual PBR checked first</text>
+
+      <!-- PBR yes: side branch (yes label ABOVE arrow) -->
+      <text class="fg-tag fg-muted" x="640" y="613" text-anchor="middle" dominant-baseline="central">yes</text>
+      <path class="fg-stroke-muted" d="M564 625 L720 625" fill="none" stroke-width="1.5" marker-end="url(#fg-arrow)"/>
+      <rect class="fg-box-soft" x="720" y="600" width="200" height="50" rx="6"/>
+      <text class="fg-label-sm" x="820" y="618" text-anchor="middle" dominant-baseline="central">Skip FIB + SD-WAN</text>
+      <text class="fg-sub-sm" x="820" y="636" text-anchor="middle" dominant-baseline="central">Jump straight to egress</text>
+
+      <!-- PBR no -->
+      <text class="fg-tag fg-muted" x="450" y="665" text-anchor="start" dominant-baseline="central">no</text>
+      <line class="fg-arr-line" x1="420" y1="650" x2="420" y2="692" marker-end="url(#fg-arrow)"/>
+
+      <!-- FIB lookup -->
+      <rect class="fg-box" x="290" y="700" width="260" height="50" rx="6"/>
+      <text class="fg-label" x="420" y="718" text-anchor="middle" dominant-baseline="central">FIB lookup (the gatekeeper)</text>
+      <text class="fg-sub" x="420" y="737" text-anchor="middle" dominant-baseline="central">Routing table consulted for best path</text>
+      <line class="fg-arr-line" x1="420" y1="750" x2="420" y2="772" marker-end="url(#fg-arrow)"/>
+
+      <!-- Decision: SD-WAN member? -->
+      <polygon class="fg-decision-route" points="270,780 570,780 594,808 570,836 270,836 246,808"/>
+      <text class="fg-label" x="420" y="801" text-anchor="middle" dominant-baseline="central">Best route points to SD-WAN member?</text>
+      <text class="fg-sub" x="420" y="820" text-anchor="middle" dominant-baseline="central">Otherwise SD-WAN rules are ignored entirely</text>
+
+      <!-- SD-WAN member NO -->
+      <text class="fg-tag fg-muted" x="640" y="795" text-anchor="middle" dominant-baseline="central">no</text>
+      <path class="fg-stroke-muted" d="M594 808 L720 808" fill="none" stroke-width="1.5" marker-end="url(#fg-arrow)"/>
+      <rect class="fg-box-soft" x="720" y="783" width="200" height="50" rx="6"/>
+      <text class="fg-label-sm" x="820" y="801" text-anchor="middle" dominant-baseline="central">Use FIB interface</text>
+      <text class="fg-sub-sm" x="820" y="819" text-anchor="middle" dominant-baseline="central">Continue to firewall phase</text>
+
+      <text class="fg-tag fg-muted" x="450" y="851" text-anchor="start" dominant-baseline="central">yes</text>
+      <line class="fg-arr-line" x1="420" y1="836" x2="420" y2="878" marker-end="url(#fg-arrow)"/>
+
+      <!-- SD-WAN rules -->
+      <rect class="fg-box" x="290" y="886" width="260" height="50" rx="6"/>
+      <text class="fg-label" x="420" y="904" text-anchor="middle" dominant-baseline="central">SD-WAN rule evaluation</text>
+      <text class="fg-sub" x="420" y="923" text-anchor="middle" dominant-baseline="central">App / user / SLA, top-down rule list</text>
+      <line class="fg-arr-line" x1="420" y1="936" x2="420" y2="958" marker-end="url(#fg-arrow)"/>
+
+      <!-- Decision: SD-WAN rule match? -->
+      <polygon class="fg-decision-route" points="280,966 560,966 584,992 560,1018 280,1018 256,992"/>
+      <text class="fg-label" x="420" y="985" text-anchor="middle" dominant-baseline="central">Custom SD-WAN rule match?</text>
+      <text class="fg-sub" x="420" y="1004" text-anchor="middle" dominant-baseline="central">And selected member has a valid route</text>
+
+      <!-- SDWAN rule NO -->
+      <text class="fg-tag fg-muted" x="640" y="979" text-anchor="middle" dominant-baseline="central">no</text>
+      <path class="fg-stroke-muted" d="M584 992 L720 992" fill="none" stroke-width="1.5" marker-end="url(#fg-arrow)"/>
+      <rect class="fg-box-soft" x="720" y="967" width="200" height="50" rx="6"/>
+      <text class="fg-label-sm" x="820" y="985" text-anchor="middle" dominant-baseline="central">Implicit rule</text>
+      <text class="fg-sub-sm" x="820" y="1003" text-anchor="middle" dominant-baseline="central">ECMP across members</text>
+
+      <text class="fg-tag fg-muted" x="450" y="1033" text-anchor="start" dominant-baseline="central">yes</text>
+      <line class="fg-arr-line" x1="420" y1="1018" x2="420" y2="1060" marker-end="url(#fg-arrow)"/>
+
+      <!-- RPF -->
+      <rect class="fg-box" x="300" y="1068" width="240" height="50" rx="6"/>
+      <text class="fg-label" x="420" y="1086" text-anchor="middle" dominant-baseline="central">RPF check</text>
+      <text class="fg-sub" x="420" y="1105" text-anchor="middle" dominant-baseline="central">Strict or loose against routing table</text>
+      <line class="fg-arr-line" x1="420" y1="1118" x2="420" y2="1148" marker-end="url(#fg-arrow)"/>
+
+      <!-- ============ PHASE 3: FIREWALL POLICY ============ -->
+      <rect class="fg-phase-sec" x="60" y="1156" width="600" height="220" rx="10"/>
+      <text class="fg-phase fg-phase-label-sec" x="80" y="1182">PHASE 3 FIREWALL POLICY</text>
+
+      <polygon class="fg-decision-sec" points="270,1196 570,1196 594,1224 570,1252 270,1252 246,1224"/>
+      <text class="fg-label" x="420" y="1217" text-anchor="middle" dominant-baseline="central">iprope policy match?</text>
+      <text class="fg-sub" x="420" y="1236" text-anchor="middle" dominant-baseline="central">Sequential scan, src/dst/svc/user/schedule</text>
+
+      <!-- DROP: clean direction, arrow into the box -->
+      <text class="fg-tag fg-bad" x="640" y="1211" text-anchor="middle" dominant-baseline="central">no</text>
+      <path class="fg-stroke-bad" d="M594 1224 L720 1224" fill="none" stroke-width="1.5" marker-end="url(#fg-arrow)"/>
+      <rect x="720" y="1199" width="160" height="50" rx="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="1"/>
+      <text class="fg-tag fg-bad" style="font-size:14px;" x="800" y="1217" text-anchor="middle" dominant-baseline="central">DROP</text>
+      <text class="fg-sub-sm" x="800" y="1235" text-anchor="middle" dominant-baseline="central">Implicit deny</text>
+
+      <text class="fg-tag fg-muted" x="450" y="1267" text-anchor="start" dominant-baseline="central">yes</text>
+      <line class="fg-arr-line" x1="420" y1="1252" x2="420" y2="1297" marker-end="url(#fg-arrow)"/>
+
+      <rect class="fg-box" x="250" y="1305" width="340" height="50" rx="6"/>
+      <text class="fg-label" x="420" y="1323" text-anchor="middle" dominant-baseline="central">Session helpers + session install</text>
+      <text class="fg-sub" x="420" y="1342" text-anchor="middle" dominant-baseline="central">SIP/FTP/TFTP ALG pinholes, write to session table</text>
+      <line class="fg-arr-line" x1="420" y1="1355" x2="420" y2="1402" marker-end="url(#fg-arrow)"/>
+
+      <!-- ============ PHASE 4: UTM/NGFW ============ -->
+      <rect class="fg-phase-route" x="60" y="1410" width="600" height="190" rx="10"/>
+      <text class="fg-phase fg-phase-label-route" x="80" y="1436">PHASE 4 UTM / NGFW INSPECTION</text>
+
+      <rect x="84" y="1454" width="270" height="130" rx="6" fill="var(--bg-elevated)" stroke="var(--border-strong)" stroke-width="0.5"/>
+      <text style="font-family: var(--sans); font-size: 13px; font-weight: 600; fill: var(--text);" x="219" y="1475" text-anchor="middle" dominant-baseline="central">Flow-based (IPS engine)</text>
+      <text class="fg-sub" x="100" y="1500" dominant-baseline="central">Stream inspection, low memory</text>
+      <text class="fg-sub" x="100" y="1518" dominant-baseline="central">SSL decrypt (CP9/CP10)</text>
+      <text class="fg-sub" x="100" y="1536" dominant-baseline="central">IPS, AppCtrl, URL, Botnet in 1 pass</text>
+      <text class="fg-sub" x="100" y="1554" dominant-baseline="central">Stream-based AV</text>
+
+      <rect x="368" y="1454" width="270" height="130" rx="6" fill="var(--bg-elevated)" stroke="var(--border-strong)" stroke-width="0.5"/>
+      <text style="font-family: var(--sans); font-size: 13px; font-weight: 600; fill: var(--text);" x="503" y="1475" text-anchor="middle" dominant-baseline="central">Proxy-based (WAD daemon)</text>
+      <text class="fg-sub" x="384" y="1500" dominant-baseline="central">Full reassembly, higher memory</text>
+      <text class="fg-sub" x="384" y="1518" dominant-baseline="central">Splits TCP into 2 connections</text>
+      <text class="fg-sub" x="384" y="1536" dominant-baseline="central">Buffers files before scanning</text>
+      <text class="fg-sub" x="384" y="1554" dominant-baseline="central">Termination point for session</text>
+
+      <line class="fg-arr-line" x1="420" y1="1600" x2="420" y2="1640" marker-end="url(#fg-arrow)"/>
+
+      <!-- ============ PHASE 5: EGRESS ============ -->
+      <rect class="fg-phase-sec" x="60" y="1648" width="600" height="260" rx="10"/>
+      <text class="fg-phase fg-phase-label-sec" x="80" y="1674">PHASE 5 EGRESS</text>
+
+      <rect class="fg-box" x="300" y="1688" width="240" height="36" rx="6"/>
+      <text class="fg-label-sm" x="420" y="1700" text-anchor="middle" dominant-baseline="central">SNAT translation</text>
+      <text class="fg-sub-sm" x="420" y="1716" text-anchor="middle" dominant-baseline="central">Source IP/port rewrite</text>
+      <line class="fg-arr-line" x1="420" y1="1724" x2="420" y2="1740" marker-end="url(#fg-arrow)"/>
+
+      <rect class="fg-box" x="300" y="1744" width="240" height="36" rx="6"/>
+      <text class="fg-label-sm" x="420" y="1756" text-anchor="middle" dominant-baseline="central">Traffic shaping / QoS</text>
+      <text class="fg-sub-sm" x="420" y="1772" text-anchor="middle" dominant-baseline="central">Priority, guaranteed bandwidth</text>
+      <line class="fg-arr-line" x1="420" y1="1780" x2="420" y2="1796" marker-end="url(#fg-arrow)"/>
+
+      <rect class="fg-box" x="300" y="1800" width="240" height="36" rx="6"/>
+      <text class="fg-label-sm" x="420" y="1812" text-anchor="middle" dominant-baseline="central">IPsec encap (if tunnel)</text>
+      <text class="fg-sub-sm" x="420" y="1828" text-anchor="middle" dominant-baseline="central">ESP, AES, CP offload</text>
+      <line class="fg-arr-line" x1="420" y1="1836" x2="420" y2="1852" marker-end="url(#fg-arrow)"/>
+
+      <rect class="fg-box" x="300" y="1856" width="240" height="36" rx="6"/>
+      <text class="fg-label-sm" x="420" y="1868" text-anchor="middle" dominant-baseline="central">L2 rewrite + Tx FIFO</text>
+      <text class="fg-sub-sm" x="420" y="1884" text-anchor="middle" dominant-baseline="central">ARP next-hop, frame on wire</text>
+      <line class="fg-arr-line" x1="420" y1="1892" x2="420" y2="1922" marker-end="url(#fg-arrow)"/>
+
+      <!-- Exit -->
+      <rect x="350" y="1930" width="140" height="44" rx="6" fill="var(--surface)" stroke="var(--success)" stroke-width="1"/>
+      <text style="font-family: var(--sans); font-size: 14px; font-weight: 600; fill: var(--success);" x="420" y="1955" text-anchor="middle" dominant-baseline="central">Packet egress</text>
+    </svg>
+  </div>
+
+  <div class="flow-diagram-legend" style="display: flex; flex-wrap: wrap; gap: 18px; margin-top: 14px; font-size: 12px; color: var(--text-secondary);">
+    <span style="display:inline-flex; align-items:center; gap:6px;"><span style="display:inline-block; width:10px; height:10px; border:1px solid var(--accent); background:transparent;"></span> Security / policy phase</span>
+    <span style="display:inline-flex; align-items:center; gap:6px;"><span style="display:inline-block; width:10px; height:10px; border:1px solid var(--warn); background:transparent;"></span> Kernel routing phase</span>
+    <span style="display:inline-flex; align-items:center; gap:6px;"><span style="display:inline-block; width:14px; height:2px; background:var(--success);"></span> Fast path (ASIC)</span>
+    <span style="display:inline-flex; align-items:center; gap:6px;"><span style="display:inline-block; width:14px; height:2px; background:var(--text-secondary);"></span> Side branch outcome</span>
+    <span style="display:inline-flex; align-items:center; gap:6px;"><span style="display:inline-block; width:14px; height:2px; background:var(--accent);"></span> Drop</span>
+  </div>
+</div>
 
     </div>
   </details>
