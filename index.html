@@ -7,71 +7,190 @@
 <link rel="icon" type="image/png" href="ftnt.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#0a0a0c">
+<meta name="description" content="FortiGate field reference console — debug flows, sniffer recipes, VPN, BGP, SD-WAN and more. Built by a network engineer for network engineers.">
 <style>
 /* ============================================================
-   Tokens
+   Aaqhil · Layer 8
+   ============================================================ */
+
+/* ============================================================
+   1. Tokens
    ============================================================ */
 :root {
-  --bg: #0a0a0a;
-  --bg-elevated: #111111;
-  --surface: #161616;
-  --surface-hover: #1c1c1c;
-  --border: #242424;
-  --border-strong: #333333;
-  --text: #f5f5f7;
-  --text-secondary: #a1a1a6;
-  --text-muted: #6e6e73;
-  --text-dim: #4a4a4f;
-  --accent: #da291c;
-  --accent-soft: rgba(218, 41, 28, 0.12);
-  --accent-glow: rgba(218, 41, 28, 0.25);
-  --success: #30d158;
-  --success-soft: rgba(48, 209, 88, 0.12);
-  --warn: #ff9f0a;
-  --mono: 'Geist Mono', ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas, monospace;
-  --sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  --radius: 10px;
-  --radius-sm: 6px;
-  --radius-lg: 16px;
+  /* Surfaces — layered greys, calibrated for OLED + IPS */
+  --bg-0: #000000;
+  --bg-1: #0a0a0c;
+  --bg-2: #101013;
+  --bg-3: #16161b;
+  --bg-4: #1c1c22;
+
+  /* Glass */
+  --glass-thin: rgba(20, 20, 24, 0.55);
+  --glass-med:  rgba(18, 18, 22, 0.72);
+  --glass-thick:rgba(14, 14, 18, 0.86);
+  --glass-stroke: rgba(255, 255, 255, 0.08);
+  --glass-stroke-strong: rgba(255, 255, 255, 0.14);
+  --glass-highlight: rgba(255, 255, 255, 0.04);
+
+  /* Legacy surface aliases (so I don't have to touch 4000 lines of content) */
+  --bg: var(--bg-0);
+  --bg-elevated: var(--bg-2);
+  --surface: var(--bg-3);
+  --surface-hover: var(--bg-4);
+  --border: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.14);
+
+  /* Type */
+  --text:           #f5f5f7;
+  --text-secondary: #a8a8af;
+  --text-muted:     #6e6e76;
+  --text-dim:       #48484f;
+
+  /* Accent — Fortinet red, tuned */
+  --accent:        #ff3b30;
+  --accent-2:      #ff6b5e;
+  --accent-deep:   #c01f15;
+  --accent-soft:   rgba(255, 59, 48, 0.14);
+  --accent-glow:   rgba(255, 59, 48, 0.35);
+  --accent-ring:   rgba(255, 59, 48, 0.22);
+
+  --success:       #30d158;
+  --success-soft:  rgba(48, 209, 88, 0.14);
+  --warn:          #ff9f0a;
+  --warn-soft:     rgba(255, 159, 10, 0.14);
+  --info:          #64d2ff;
+  --info-soft:     rgba(100, 210, 255, 0.14);
+
+  /* Type stack — Apple-first */
+  --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', 'SF Mono', ui-monospace, 'Geist Mono', Menlo, Consolas, monospace;
+
+  /* Radii */
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+
+  /* Legacy radius aliases */
+  --radius: var(--r-md);
+  --radius-sm: var(--r-sm);
+  --radius-lg: var(--r-lg);
+
+  /* Motion — Apple curves */
+  --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);     /* "easeOutExpo-ish", display motion */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* gentle overshoot */
+  --dur-fast:   140ms;
+  --dur-base:   240ms;
+  --dur-slow:   480ms;
+
+  /* Elevation */
+  --shadow-1: 0 1px 2px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04);
+  --shadow-2: 0 4px 16px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
+  --shadow-3: 0 12px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06);
+  --shadow-glow: 0 0 60px var(--accent-glow);
 }
 
+/* ============================================================
+   2. Reset + base
+   ============================================================ */
 * { box-sizing: border-box; margin: 0; padding: 0; }
+*::selection { background: var(--accent-soft); color: var(--text); }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 140px;
+  background: var(--bg-0);
+}
 
 body {
   font-family: var(--sans);
-  background: var(--bg);
+  background: var(--bg-0);
   color: var(--text);
   font-size: 15px;
-  line-height: 1.5;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-feature-settings: 'ss01', 'cv11';
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'ss01', 'cv11', 'kern';
+  font-variant-ligatures: common-ligatures;
   min-height: 100vh;
-  background-image:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(218, 41, 28, 0.06), transparent 60%),
-    radial-gradient(ellipse 100% 100% at 100% 100%, rgba(255, 255, 255, 0.015), transparent 50%);
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* The "atmospheric" backdrop. Fixed, slow-drifting mesh.
+   This is what gives the page its depth. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: -20% -20% -20% -20%;
+  z-index: -2;
+  background:
+    radial-gradient(ellipse 60% 50% at 15% 0%,  rgba(255, 59, 48, 0.10), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 85% 10%, rgba(100, 210, 255, 0.05), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 50% 100%, rgba(255, 107, 94, 0.04), transparent 60%),
+    radial-gradient(ellipse 40% 30% at 20% 80%, rgba(48, 209, 88, 0.025), transparent 60%);
+  filter: blur(40px);
+  animation: drift 28s var(--ease-in-out) infinite alternate;
+  pointer-events: none;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    /* very faint noise via SVG turbulence */
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.04 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.6;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+@keyframes drift {
+  0%   { transform: translate3d(0,0,0) scale(1); }
+  100% { transform: translate3d(-3%, 2%, 0) scale(1.08); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before { animation: none; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
 }
 
 /* ============================================================
-   Header
+   3. Header — sticky, "liquid glass" that condenses on scroll
    ============================================================ */
 .header {
-  border-bottom: 1px solid var(--border);
-  background: rgba(10, 10, 10, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   position: sticky;
   top: 0;
   z-index: 50;
+  background: var(--glass-med);
+  backdrop-filter: saturate(180%) blur(28px);
+  -webkit-backdrop-filter: saturate(180%) blur(28px);
+  border-bottom: 1px solid var(--glass-stroke);
+  transition: background var(--dur-base) var(--ease-out),
+              border-color var(--dur-base) var(--ease-out),
+              box-shadow var(--dur-base) var(--ease-out);
+}
+
+.header.is-scrolled {
+  background: var(--glass-thick);
+  border-bottom-color: var(--glass-stroke-strong);
+  box-shadow: 0 1px 0 0 rgba(0,0,0,0.4), 0 8px 32px rgba(0,0,0,0.25);
 }
 
 .header-inner {
-  max-width: 1100px;
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 18px 32px;
+  padding: 14px 28px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -82,43 +201,53 @@ body {
   display: flex;
   align-items: center;
   gap: 14px;
+  min-width: 0;
 }
 
+/* The pulsing dot — refined */
 .logo-dot {
-  width: 10px;
-  height: 10px;
-  background: var(--accent);
+  width: 11px;
+  height: 11px;
+  background: radial-gradient(circle at 35% 35%, #ff6b5e, var(--accent) 60%, var(--accent-deep));
   border-radius: 50%;
-  box-shadow: 0 0 12px var(--accent-glow);
+  box-shadow:
+    0 0 0 1px rgba(255, 59, 48, 0.4),
+    0 0 16px var(--accent-glow),
+    inset 0 0 4px rgba(255, 255, 255, 0.4);
   position: relative;
+  flex-shrink: 0;
 }
 
 .logo-dot::after {
   content: '';
   position: absolute;
-  inset: -3px;
+  inset: -4px;
   border-radius: 50%;
-  border: 1px solid var(--accent-soft);
-  animation: pulse 3s ease-in-out infinite;
+  border: 1px solid var(--accent);
+  opacity: 0;
+  animation: pulse 2.6s var(--ease-out) infinite;
 }
 
 @keyframes pulse {
-  0%, 100% { transform: scale(1); opacity: 0.6; }
-  50% { transform: scale(1.4); opacity: 0; }
+  0%   { transform: scale(0.9); opacity: 0.7; }
+  100% { transform: scale(2.2); opacity: 0; }
 }
 
 .brand-title {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
 }
 
 .brand-sub {
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--text-muted);
   font-family: var(--mono);
   letter-spacing: 0.02em;
+  line-height: 1.2;
 }
+
 .brand-home {
   display: inline-flex;
   align-items: center;
@@ -126,54 +255,77 @@ body {
   font-family: var(--sans);
   font-size: 11.5px;
   font-weight: 500;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--text-secondary);
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--glass-thin);
+  border: 1px solid var(--glass-stroke);
   padding: 8px 14px;
-  border-radius: var(--radius-sm);
+  border-radius: 100px;
   text-decoration: none;
-  transition: all 0.15s ease;
+  transition: all var(--dur-base) var(--ease-out);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
+
 .brand-home:hover {
-  background: var(--surface-hover);
-  border-color: var(--border-strong);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--glass-stroke-strong);
   color: var(--text);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
+
+.brand-home:active {
+  transform: translateY(0);
+}
+
 .brand-home .arrow {
   display: inline-block;
   transform: rotate(-90deg);
   position: relative;
   top: -1px;
+  transition: transform var(--dur-base) var(--ease-spring);
 }
+
+.brand-home:hover .arrow {
+  transform: rotate(-90deg) translateX(2px);
+}
+
+/* Search button — pill, glassy */
 .search-btn {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 12px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
+  padding: 8px 12px 8px 14px;
+  background: var(--glass-thin);
+  border: 1px solid var(--glass-stroke);
+  border-radius: 100px;
+  color: var(--text-muted);
   font-family: var(--sans);
   font-size: 13px;
   cursor: pointer;
-  transition: all 0.15s ease;
-  min-width: 220px;
+  transition: all var(--dur-base) var(--ease-out);
+  min-width: 240px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .search-btn:hover {
-  border-color: var(--border-strong);
-  background: var(--surface-hover);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--glass-stroke-strong);
   color: var(--text);
+  transform: translateY(-1px);
 }
 
 .search-btn svg {
   width: 14px;
   height: 14px;
   opacity: 0.7;
+  transition: opacity var(--dur-base) var(--ease-out);
 }
+
+.search-btn:hover svg { opacity: 1; }
 
 .search-btn .search-label {
   flex: 1;
@@ -182,36 +334,119 @@ body {
 
 kbd {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 10.5px;
   padding: 2px 6px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--glass-stroke);
+  border-radius: 5px;
   color: var(--text-muted);
   letter-spacing: 0.04em;
+  font-weight: 500;
 }
 
 /* ============================================================
-   Tabs
+   4. Hero — the "wow" up top
+   ============================================================ */
+.hero {
+  position: relative;
+  padding: 88px 28px 64px;
+  max-width: 1180px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px 6px 8px;
+  background: var(--glass-thin);
+  border: 1px solid var(--glass-stroke);
+  border-radius: 100px;
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 28px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: fade-up 0.8s var(--ease-out) backwards;
+}
+
+.hero-eyebrow .dot {
+  width: 6px;
+  height: 6px;
+  background: var(--success);
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(48, 209, 88, 0.6);
+  animation: live-pulse 2s var(--ease-in-out) infinite;
+}
+
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.hero-title {
+  font-size: clamp(40px, 6.5vw, 72px);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+  margin-bottom: 20px;
+  animation: fade-up 0.9s var(--ease-out) 0.05s backwards;
+}
+
+.hero-title .accent-word {
+  background: linear-gradient(135deg, var(--accent-2) 0%, var(--accent) 50%, var(--accent-deep) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  position: relative;
+}
+
+.hero-sub {
+  font-size: clamp(16px, 1.6vw, 19px);
+  color: var(--text-secondary);
+  max-width: 640px;
+  line-height: 1.55;
+  letter-spacing: -0.005em;
+  animation: fade-up 0.9s var(--ease-out) 0.15s backwards;
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   5. Tabs — sticky, glassy, with sliding indicator
    ============================================================ */
 .tabs {
-  border-bottom: 1px solid var(--border);
-  background: rgba(10, 10, 10, 0.5);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   position: sticky;
-  top: 65px;
+  top: var(--header-h, 60px);
   z-index: 40;
+  background: var(--glass-med);
+  backdrop-filter: saturate(180%) blur(28px);
+  -webkit-backdrop-filter: saturate(180%) blur(28px);
+  border-bottom: 1px solid var(--glass-stroke);
+  transition: background var(--dur-base) var(--ease-out);
+}
+
+.header.is-scrolled + .tabs {
+  background: var(--glass-thick);
+  border-bottom-color: var(--glass-stroke-strong);
 }
 
 .tabs-inner {
-  max-width: 1100px;
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 0 32px;
+  padding: 0 28px;
   display: flex;
-  gap: 4px;
+  gap: 2px;
   overflow-x: auto;
   scrollbar-width: none;
+  position: relative;
 }
 
 .tabs-inner::-webkit-scrollbar { display: none; }
@@ -223,16 +458,35 @@ kbd {
   font-family: var(--sans);
   font-size: 13.5px;
   font-weight: 500;
-  padding: 14px 14px 16px;
+  padding: 14px 16px 16px;
   cursor: pointer;
   position: relative;
-  transition: color 0.15s ease;
+  transition: color var(--dur-fast) var(--ease-out);
   white-space: nowrap;
   letter-spacing: -0.005em;
+  border-radius: 8px 8px 0 0;
+}
+
+.tab::before {
+  content: '';
+  position: absolute;
+  inset: 6px 8px 8px;
+  background: var(--glass-highlight);
+  border-radius: 8px;
+  opacity: 0;
+  transform: scale(0.96);
+  transition: opacity var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+  pointer-events: none;
+  z-index: -1;
 }
 
 .tab:hover {
   color: var(--text-secondary);
+}
+
+.tab:hover::before {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .tab.active {
@@ -243,80 +497,119 @@ kbd {
   content: '';
   position: absolute;
   bottom: -1px;
-  left: 14px;
-  right: 14px;
+  left: 16px;
+  right: 16px;
   height: 2px;
-  background: var(--accent);
+  background: linear-gradient(90deg, var(--accent-2), var(--accent));
   border-radius: 2px 2px 0 0;
+  box-shadow: 0 0 12px var(--accent-glow);
+  animation: indicator-in 0.4s var(--ease-spring);
+}
+
+@keyframes indicator-in {
+  from { transform: scaleX(0.3); opacity: 0; }
+  to   { transform: scaleX(1); opacity: 1; }
 }
 
 /* ============================================================
-   Main layout
+   6. Main layout
    ============================================================ */
 main {
-  max-width: 1100px;
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 48px 32px 120px;
+  padding: 48px 28px 140px;
+  position: relative;
 }
 
 .panel {
   display: none;
-  animation: fadeIn 0.25s ease;
 }
 
 .panel.active {
   display: block;
+  animation: panel-in 0.5s var(--ease-out);
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes panel-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .panel-header {
-  margin-bottom: 32px;
+  margin-bottom: 36px;
+  position: relative;
 }
 
 .panel-title {
-  font-size: 28px;
+  font-size: clamp(28px, 3.4vw, 40px);
   font-weight: 600;
-  letter-spacing: -0.025em;
-  margin-bottom: 6px;
+  letter-spacing: -0.03em;
+  margin-bottom: 8px;
+  line-height: 1.08;
+  background: linear-gradient(180deg, #ffffff 0%, #c8c8d0 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .panel-sub {
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: 15px;
+  letter-spacing: -0.005em;
+  max-width: 600px;
 }
 
 /* ============================================================
-   Cards / Sections
+   7. Cards
    ============================================================ */
 .card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  background: linear-gradient(180deg, var(--bg-3) 0%, var(--bg-2) 100%);
+  border: 1px solid var(--glass-stroke);
+  border-radius: var(--r-md);
   margin-bottom: 20px;
   overflow: hidden;
+  position: relative;
+  transition: border-color var(--dur-base) var(--ease-out),
+              transform var(--dur-base) var(--ease-out),
+              box-shadow var(--dur-base) var(--ease-out);
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.07), transparent 40%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+}
+
+.card:hover {
+  border-color: var(--glass-stroke-strong);
+  box-shadow: var(--shadow-2);
 }
 
 .card-header {
-  padding: 18px 20px;
-  border-bottom: 1px solid var(--border);
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--glass-stroke);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
 }
 
 .card-title {
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 600;
   letter-spacing: -0.005em;
 }
 
 .card-meta {
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--text-muted);
   font-family: var(--mono);
 }
@@ -329,77 +622,98 @@ main {
 
 .card-tag {
   font-size: 10.5px;
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  padding: 3px 7px;
-  border-radius: 4px;
+  padding: 3px 8px;
+  border-radius: 100px;
   background: var(--accent-soft);
   color: var(--accent);
+  border: 1px solid rgba(255, 59, 48, 0.2);
 }
 
-.card-tag.warn { background: rgba(255, 159, 10, 0.12); color: var(--warn); }
-.card-tag.dim { background: var(--bg-elevated); color: var(--text-muted); border: 1px solid var(--border); }
+.card-tag.warn  { background: var(--warn-soft); color: var(--warn); border-color: rgba(255, 159, 10, 0.2); }
+.card-tag.dim   { background: rgba(255,255,255,0.04); color: var(--text-muted); border-color: var(--glass-stroke); }
 
-/* Generator card — featured */
+/* Generator card — the hero card on each panel */
 .gen-card {
-  background: linear-gradient(180deg, var(--surface), var(--bg-elevated));
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 28px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.03), transparent 30%),
+    linear-gradient(180deg, var(--bg-3), var(--bg-2));
+  border: 1px solid var(--glass-stroke);
+  border-radius: var(--r-lg);
+  padding: 32px;
   margin-bottom: 32px;
   position: relative;
   overflow: hidden;
+  box-shadow: var(--shadow-2);
 }
 
 .gen-card::before {
   content: '';
   position: absolute;
   top: 0;
-  left: 0;
-  right: 0;
+  left: 10%;
+  right: 10%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--accent-soft) 50%, transparent);
+  background: linear-gradient(90deg, transparent, var(--accent-glow) 50%, transparent);
+}
+
+.gen-card::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -10%;
+  width: 60%;
+  height: 200%;
+  background: radial-gradient(ellipse at center, var(--accent-soft) 0%, transparent 60%);
+  pointer-events: none;
+  opacity: 0.5;
+  filter: blur(40px);
 }
 
 .gen-title {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-muted);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--accent);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-bottom: 4px;
+  letter-spacing: 0.12em;
+  margin-bottom: 6px;
+  position: relative;
 }
 
 .gen-heading {
-  font-size: 22px;
+  font-size: clamp(22px, 2.4vw, 28px);
   font-weight: 600;
-  letter-spacing: -0.02em;
-  margin-bottom: 24px;
+  letter-spacing: -0.025em;
+  margin-bottom: 28px;
+  line-height: 1.15;
+  position: relative;
 }
 
 /* ============================================================
-   Form controls
+   8. Form controls — refined
    ============================================================ */
 .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 14px;
   margin-bottom: 20px;
+  position: relative;
 }
 
 .form-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 7px;
 }
 
 .form-label {
-  font-size: 11.5px;
-  font-weight: 500;
+  font-size: 11px;
+  font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
 }
 
 .form-label.required::after {
@@ -411,27 +725,59 @@ main {
 .form-input, .form-select {
   font-family: var(--mono);
   font-size: 13.5px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--glass-stroke);
+  border-radius: var(--r-sm);
+  padding: 11px 13px;
   color: var(--text);
-  transition: all 0.15s ease;
+  transition: border-color var(--dur-fast) var(--ease-out),
+              background var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out);
   width: 100%;
+}
+
+.form-input:hover, .form-select:hover {
+  border-color: var(--glass-stroke-strong);
 }
 
 .form-input:focus, .form-select:focus {
   outline: none;
   border-color: var(--accent);
-  background: var(--surface);
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  background: rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 0 4px var(--accent-ring);
+}
+
+/* Selects always have a valid value (one of the options), so a red focus ring
+   reads as wrong. Override to a neutral white ring instead — the user hasn't
+   typed anything that could be malformed. */
+.form-select:focus {
+  border-color: var(--glass-stroke-strong);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.08);
 }
 
 .form-input::placeholder { color: var(--text-dim); }
 
+/* Live validation states. Empty input = neutral (no class).
+   .is-valid   = green border + soft glow (criteria satisfied).
+   .is-invalid = red border + soft glow (something typed but malformed). */
+.form-input.is-valid, .form-select.is-valid {
+  border-color: var(--success);
+  box-shadow: 0 0 0 3px var(--success-soft), 0 0 14px rgba(48, 209, 88, 0.25);
+}
+.form-input.is-valid:focus, .form-select.is-valid:focus {
+  box-shadow: 0 0 0 4px rgba(48, 209, 88, 0.22), 0 0 18px rgba(48, 209, 88, 0.35);
+}
+.form-input.is-invalid {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft), 0 0 14px var(--accent-glow);
+}
+.form-input.is-invalid:focus {
+  box-shadow: 0 0 0 4px var(--accent-ring), 0 0 18px var(--accent-glow);
+}
+
 .form-select {
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a1a1a6' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a8a8af' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
   padding-right: 36px;
@@ -443,43 +789,85 @@ main {
   gap: 10px;
   flex-wrap: wrap;
   margin-top: 6px;
+  position: relative;
 }
 
+/* Buttons — the centerpiece interactions */
 .btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   font-family: var(--sans);
-  font-size: 13px;
-  font-weight: 500;
-  padding: 9px 16px;
-  border-radius: var(--radius-sm);
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: 100px;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: transform var(--dur-fast) var(--ease-spring),
+              background var(--dur-base) var(--ease-out),
+              box-shadow var(--dur-base) var(--ease-out),
+              border-color var(--dur-base) var(--ease-out),
+              color var(--dur-base) var(--ease-out);
   letter-spacing: -0.005em;
+  position: relative;
+  white-space: nowrap;
+}
+
+.btn:active {
+  transform: scale(0.97);
 }
 
 .btn-primary {
-  background: var(--accent);
+  background: linear-gradient(180deg, var(--accent-2) 0%, var(--accent) 100%);
   color: #fff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 0 0 1px var(--accent-deep);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.15);
 }
 
 .btn-primary:hover {
-  background: #c01f15;
-  box-shadow: 0 4px 16px var(--accent-glow);
+  background: linear-gradient(180deg, #ff7a6e 0%, #ff453a 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 4px 16px var(--accent-glow),
+    0 0 0 1px var(--accent-deep);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0) scale(0.97);
 }
 
 .btn-secondary {
-  background: var(--surface);
-  border-color: var(--border);
+  background: var(--glass-thin);
+  border-color: var(--glass-stroke);
   color: var(--text-secondary);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .btn-secondary:hover {
-  background: var(--surface-hover);
-  border-color: var(--border-strong);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: var(--glass-stroke-strong);
   color: var(--text);
+  transform: translateY(-1px);
+}
+
+/* Ghost — lowest-weight action (Reset). No fill, only stroke on hover. */
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-muted);
+}
+
+.btn-ghost:hover {
+  background: var(--glass-thin);
+  border-color: var(--glass-stroke);
+  color: var(--text);
+  transform: translateY(-1px);
 }
 
 .btn svg {
@@ -492,49 +880,59 @@ main {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-top: 14px;
+  margin-top: 16px;
   flex-wrap: wrap;
   min-height: 26px;
+  position: relative;
 }
 
 .recent-label {
-  font-size: 11px;
-  font-weight: 500;
+  font-size: 10.5px;
+  font-weight: 600;
   color: var(--text-dim);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.1em;
 }
 
 .recent-pill {
   font-family: var(--mono);
   font-size: 12px;
-  padding: 4px 10px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
+  padding: 5px 12px;
+  background: var(--glass-thin);
+  border: 1px solid var(--glass-stroke);
   border-radius: 100px;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all var(--dur-base) var(--ease-out);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .recent-pill:hover {
   border-color: var(--accent);
   color: var(--text);
+  background: var(--accent-soft);
+  transform: translateY(-1px);
 }
 
 /* ============================================================
-   Code blocks
+   9. Code blocks — terminal feel
    ============================================================ */
 .code-wrap {
   position: relative;
-  background: #0d0d0d;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.015), transparent 100%),
+    #08080a;
+  border: 1px solid var(--glass-stroke);
+  border-radius: var(--r-sm);
   overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
 }
 
 .code-wrap.empty {
   border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.2);
 }
 
 .code-wrap.empty .code-block {
@@ -545,47 +943,57 @@ main {
 .code-block {
   font-family: var(--mono);
   font-size: 13px;
-  line-height: 1.65;
-  padding: 16px 56px 16px 18px;
+  line-height: 1.7;
+  padding: 18px 60px 18px 20px;
   white-space: pre;
   overflow-x: auto;
-  color: #e5e5e7;
+  color: #e8e8ec;
   tab-size: 4;
+  font-feature-settings: 'liga' 0;
 }
 
-.code-block::-webkit-scrollbar { height: 8px; }
+.code-block::-webkit-scrollbar { height: 6px; }
 .code-block::-webkit-scrollbar-track { background: transparent; }
-.code-block::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+.code-block::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+.code-block::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
 
 .copy-btn {
   position: absolute;
   top: 10px;
   right: 10px;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--glass-thin);
+  border: 1px solid var(--glass-stroke);
   color: var(--text-muted);
   font-family: var(--sans);
   font-size: 11.5px;
-  font-weight: 500;
-  padding: 5px 10px;
-  border-radius: 5px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all var(--dur-base) var(--ease-out);
   display: flex;
   align-items: center;
   gap: 5px;
   letter-spacing: 0.01em;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .copy-btn:hover {
-  background: var(--surface-hover);
-  border-color: var(--border-strong);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--glass-stroke-strong);
   color: var(--text);
+  transform: translateY(-1px);
 }
+
+.copy-btn:active { transform: translateY(0) scale(0.96); }
 
 .copy-btn.copied {
   background: var(--success-soft);
-  border-color: var(--success);
+  border-color: rgba(48, 209, 88, 0.4);
   color: var(--success);
 }
 
@@ -595,12 +1003,13 @@ main {
 }
 
 /* ============================================================
-   Tables
+   10. Tables
    ============================================================ */
 .table-wrap {
   overflow-x: auto;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--glass-stroke);
+  border-radius: var(--r-sm);
+  background: rgba(0, 0, 0, 0.15);
 }
 
 table {
@@ -610,46 +1019,63 @@ table {
 }
 
 th, td {
-  padding: 10px 14px;
+  padding: 11px 16px;
   text-align: left;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--glass-stroke);
 }
 
 th {
-  background: var(--bg-elevated);
-  font-weight: 500;
+  background: rgba(255, 255, 255, 0.025);
+  font-weight: 600;
   color: var(--text-secondary);
-  font-size: 12px;
+  font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
+  position: sticky;
+  top: 0;
 }
 
 tbody tr:last-child td { border-bottom: none; }
 
-tbody tr:hover { background: var(--surface-hover); }
+tbody tr {
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+tbody tr:hover { background: rgba(255, 255, 255, 0.03); }
 
 td code, .inline-code {
   font-family: var(--mono);
-  font-size: 12.5px;
-  background: var(--bg-elevated);
-  padding: 2px 6px;
-  border-radius: 4px;
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2px 7px;
+  border-radius: 5px;
   color: var(--text);
+  border: 1px solid var(--glass-stroke);
 }
 
 /* ============================================================
-   Collapsible
+   11. Collapsibles
    ============================================================ */
 details.collapse {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  margin-bottom: 16px;
+  background: linear-gradient(180deg, var(--bg-3), var(--bg-2));
+  border: 1px solid var(--glass-stroke);
+  border-radius: var(--r-md);
+  margin-bottom: 14px;
   overflow: hidden;
+  transition: border-color var(--dur-base) var(--ease-out);
+}
+
+details.collapse:hover {
+  border-color: var(--glass-stroke-strong);
+}
+
+details.collapse[open] {
+  border-color: var(--glass-stroke-strong);
+  box-shadow: var(--shadow-1);
 }
 
 details.collapse > summary {
-  padding: 16px 20px;
+  padding: 16px 22px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -657,12 +1083,13 @@ details.collapse > summary {
   list-style: none;
   font-weight: 500;
   font-size: 14px;
-  transition: background 0.15s ease;
+  transition: background var(--dur-fast) var(--ease-out);
+  letter-spacing: -0.005em;
 }
 
 details.collapse > summary::-webkit-details-marker { display: none; }
 
-details.collapse > summary:hover { background: var(--surface-hover); }
+details.collapse > summary:hover { background: rgba(255, 255, 255, 0.025); }
 
 details.collapse > summary::after {
   content: '';
@@ -671,8 +1098,12 @@ details.collapse > summary::after {
   border-right: 1.5px solid var(--text-muted);
   border-bottom: 1.5px solid var(--text-muted);
   transform: rotate(45deg);
-  transition: transform 0.2s ease;
+  transition: transform var(--dur-base) var(--ease-spring), border-color var(--dur-base) var(--ease-out);
   margin-right: 4px;
+}
+
+details.collapse > summary:hover::after {
+  border-color: var(--text);
 }
 
 details.collapse[open] > summary::after {
@@ -681,10 +1112,16 @@ details.collapse[open] > summary::after {
 }
 
 details.collapse > .collapse-body {
-  padding: 0 20px 20px;
+  padding: 4px 22px 22px;
   color: var(--text-secondary);
   font-size: 14px;
-  line-height: 1.65;
+  line-height: 1.7;
+  animation: collapse-in 0.4s var(--ease-out);
+}
+
+@keyframes collapse-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .collapse-body p { margin-bottom: 12px; }
@@ -692,47 +1129,69 @@ details.collapse > .collapse-body {
 .collapse-body strong { color: var(--text); font-weight: 600; }
 .collapse-body ol, .collapse-body ul { padding-left: 22px; margin-bottom: 12px; }
 .collapse-body li { margin-bottom: 6px; }
-.collapse-body code { font-family: var(--mono); font-size: 12.5px; background: var(--bg-elevated); padding: 2px 6px; border-radius: 4px; color: var(--text); }
+.collapse-body code {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2px 7px;
+  border-radius: 5px;
+  color: var(--text);
+  border: 1px solid var(--glass-stroke);
+}
 
 /* ============================================================
-   Search modal
+   12. Search modal — keep it tasteful
    ============================================================ */
 .search-modal {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   z-index: 100;
   display: none;
   align-items: flex-start;
   justify-content: center;
-  padding: 100px 20px 20px;
+  padding: 12vh 20px 20px;
+  animation: modal-bg-in 0.3s var(--ease-out);
 }
 
 .search-modal.open { display: flex; }
 
+@keyframes modal-bg-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 .search-box {
   width: 100%;
-  max-width: 600px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-lg);
+  max-width: 620px;
+  background: var(--glass-thick);
+  border: 1px solid var(--glass-stroke-strong);
+  border-radius: var(--r-lg);
   overflow: hidden;
-  box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+  box-shadow: 0 32px 96px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  animation: modal-in 0.4s var(--ease-spring);
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(-20px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .search-input-wrap {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border);
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--glass-stroke);
 }
 
 .search-input-wrap svg {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   color: var(--text-muted);
 }
 
@@ -743,7 +1202,8 @@ details.collapse > .collapse-body {
   outline: none;
   color: var(--text);
   font-family: var(--sans);
-  font-size: 15px;
+  font-size: 16px;
+  letter-spacing: -0.01em;
 }
 
 .search-input::placeholder { color: var(--text-dim); }
@@ -754,10 +1214,10 @@ details.collapse > .collapse-body {
 }
 
 .search-result {
-  padding: 12px 20px;
-  border-bottom: 1px solid var(--border);
+  padding: 13px 22px;
+  border-bottom: 1px solid var(--glass-stroke);
   cursor: pointer;
-  transition: background 0.1s ease;
+  transition: background var(--dur-fast) var(--ease-out);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -765,41 +1225,47 @@ details.collapse > .collapse-body {
 }
 
 .search-result:hover, .search-result.focused {
-  background: var(--surface-hover);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.search-result.focused {
+  background: var(--accent-soft);
 }
 
 .search-result-title {
   font-size: 14px;
   font-weight: 500;
   color: var(--text);
+  letter-spacing: -0.005em;
 }
 
 .search-result-meta {
-  font-size: 11.5px;
+  font-size: 11px;
   color: var(--text-muted);
   font-family: var(--mono);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
 }
 
 .search-empty {
-  padding: 40px 20px;
+  padding: 48px 20px;
   text-align: center;
   color: var(--text-muted);
   font-size: 13px;
 }
 
 /* ============================================================
-   Footer
+   13. Footer
    ============================================================ */
 footer {
-  border-top: 1px solid var(--border);
-  padding: 28px 32px;
+  border-top: 1px solid var(--glass-stroke);
+  padding: 36px 28px;
   margin-top: 80px;
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.4));
 }
 
 .footer-inner {
-  max-width: 1100px;
+  max-width: 1180px;
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -808,72 +1274,171 @@ footer {
   color: var(--text-muted);
   font-family: var(--mono);
   letter-spacing: 0.02em;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .footer-inner a {
   color: var(--text-muted);
   text-decoration: none;
-  transition: color 0.15s ease;
+  transition: color var(--dur-fast) var(--ease-out);
 }
 
 .footer-inner a:hover { color: var(--accent); }
 
 .muted { color: var(--text-dim); }
 
-/* Utility */
+/* ============================================================
+   14. Utility
+   ============================================================ */
 .row-2col {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
 }
 
-@media (max-width: 720px) {
-  .row-2col { grid-template-columns: 1fr; }
-  .header-inner { padding: 16px 20px; }
-  .tabs-inner { padding: 0 20px; }
-  main { padding: 32px 20px 80px; }
-  .search-btn { min-width: auto; }
-  .search-btn .search-label { display: none; }
-}
-
 .stack > * + * { margin-top: 14px; }
 
 .note {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.025), transparent),
+    rgba(255, 59, 48, 0.04);
+  border: 1px solid var(--glass-stroke);
   border-left: 2px solid var(--accent);
-  border-radius: var(--radius-sm);
-  padding: 12px 16px;
+  border-radius: var(--r-sm);
+  padding: 14px 18px;
   font-size: 13.5px;
   color: var(--text-secondary);
-  line-height: 1.6;
+  line-height: 1.65;
+  position: relative;
 }
 
 .note strong { color: var(--text); }
+
+/* ============================================================
+   15. Scroll-to-top FAB
+   ============================================================ */
+.fab-top {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--glass-thick);
+  border: 1px solid var(--glass-stroke-strong);
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px) scale(0.9);
+  transition: opacity var(--dur-base) var(--ease-out),
+              transform var(--dur-base) var(--ease-spring),
+              background var(--dur-base) var(--ease-out);
+  box-shadow: var(--shadow-2);
+}
+
+.fab-top.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.fab-top:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px) scale(1);
+}
+
+.fab-top:active {
+  transform: translateY(0) scale(0.94);
+}
+
+.fab-top svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ============================================================
+   16. Responsive
+   ============================================================ */
+@media (max-width: 900px) {
+  .row-2col { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 720px) {
+  .header-inner { padding: 12px 18px; gap: 12px; }
+  .tabs-inner { padding: 0 18px; }
+  main { padding: 32px 18px 80px; }
+  .hero { padding: 60px 18px 40px; }
+  .search-btn { min-width: auto; padding: 8px 12px; }
+  .search-btn .search-label { display: none; }
+  .brand-home { display: none; }
+  .gen-card { padding: 22px; border-radius: var(--r-md); }
+  .panel-header { margin-bottom: 28px; }
+  .fab-top { bottom: 20px; right: 20px; }
+}
+
+/* ============================================================
+   17. Print — make it actually printable (for runbooks)
+   ============================================================ */
+@media print {
+  body::before, body::after, .header, .tabs, .hero, footer, .fab-top, .search-btn { display: none !important; }
+  .panel { display: block !important; page-break-after: always; }
+  .gen-card, .card, details.collapse { break-inside: avoid; box-shadow: none; }
+  details.collapse { border-color: #999; }
+  details.collapse[open] > summary::after { display: none; }
+  .copy-btn { display: none; }
+  body { background: white; color: black; }
+  .code-block { color: #111; }
+}
 </style>
+
 </head>
 <body>
 
 <!-- ============================================================
      Header
 ============================================================ -->
-<header class="header">
+<header class="header" id="siteHeader">
   <div class="header-inner">
     <div class="brand">
- <a href="/" class="brand-home" aria-label="Back to home"><span class="arrow">&uarr;</span> Home</a>
-  <div class="logo-dot"></div>
-  <div>
-    <div class="brand-title">FortiGate Console</div>
-    <div class="brand-sub">field reference</div>
-  </div>
-</div>
-    <button class="search-btn" id="searchBtn" aria-label="Search">
+      <a href="/" class="brand-home" aria-label="Back to home">
+        <span class="arrow">&uarr;</span> Home
+      </a>
+      <div class="logo-dot" aria-hidden="true"></div>
+      <div>
+        <div class="brand-title">FortiGate Console</div>
+        <div class="brand-sub">field reference</div>
+      </div>
+    </div>
+    <button class="search-btn" id="searchBtn" aria-label="Search commands">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
       <span class="search-label">Search commands</span>
-      <kbd>⌘K</kbd>
+      <kbd>&#8984;K</kbd>
     </button>
   </div>
 </header>
+
+<!-- ============================================================
+     Hero
+============================================================ -->
+<section class="hero" aria-label="Intro">
+  <div class="hero-eyebrow">
+    <span class="dot" aria-hidden="true"></span>
+    <span>FortiOS 7.x &middot; Field reference</span>
+  </div>
+  <h1 class="hero-title">
+    Network engineering.<br>
+    <span class="accent-word">Sharpened.</span>
+  </h1>
+  <p class="hero-sub">Built for the CLI.</p>
+</section>
 
 <!-- ============================================================
      Tabs
@@ -899,26 +1464,26 @@ footer {
 ============================================================ -->
 <section class="panel active" data-panel="debug-flow">
   <div class="panel-header">
-    <h1 class="panel-title">Debug Flow</h1>
+    <h2 class="panel-title">Debug Flow</h2>
     <p class="panel-sub">Generate filtered flow trace blocks. Fill the form, copy, paste.</p>
   </div>
 
   <div class="gen-card">
     <div class="gen-title">Generator</div>
-    <h2 class="gen-heading">Trace a packet through FortiOS</h2>
+    <h3 class="gen-heading">Trace a packet through FortiOS</h3>
 
     <div class="form-grid">
       <div class="form-field">
         <label class="form-label" for="df-src">Source IP</label>
-        <input class="form-input" id="df-src" type="text" placeholder="172.16.5.20" autocomplete="off">
+        <input class="form-input" id="df-src" data-validate="ip" type="text" placeholder="172.16.5.20" autocomplete="off">
       </div>
       <div class="form-field">
         <label class="form-label" for="df-dst">Destination IP</label>
-        <input class="form-input" id="df-dst" type="text" placeholder="10.1.1.10" autocomplete="off">
+        <input class="form-input" id="df-dst" data-validate="ip" type="text" placeholder="10.1.1.10" autocomplete="off">
       </div>
       <div class="form-field">
         <label class="form-label" for="df-proto">Protocol</label>
-        <select class="form-select" id="df-proto">
+        <select class="form-select" id="df-proto" data-validate="select">
           <option value="icmp">ICMP (1)</option>
           <option value="tcp">TCP (6)</option>
           <option value="udp">UDP (17)</option>
@@ -927,7 +1492,7 @@ footer {
       </div>
       <div class="form-field" id="df-port-wrap" style="display:none;">
         <label class="form-label" for="df-port">Port (optional)</label>
-        <input class="form-input" id="df-port" type="text" placeholder="443" autocomplete="off">
+        <input class="form-input" id="df-port" data-validate="port" type="text" placeholder="443" autocomplete="off">
       </div>
     </div>
 
@@ -935,6 +1500,10 @@ footer {
       <button class="btn btn-primary" id="df-generate">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         Generate
+      </button>
+      <button class="btn btn-ghost" id="df-reset" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 4 3 10 9 10"/></svg>
+        Reset
       </button>
       <button class="btn btn-secondary" id="df-stop">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
@@ -998,13 +1567,13 @@ diagnose debug flow filter clear</pre>
 ============================================================ -->
 <section class="panel" data-panel="sniffer">
   <div class="panel-header">
-    <h1 class="panel-title">Packet Sniffer</h1>
+    <h2 class="panel-title">Packet Sniffer</h2>
     <p class="panel-sub">Built-in tcpdump-style capture. Useful for proving traffic is or isn't reaching the box.</p>
   </div>
 
   <div class="gen-card">
     <div class="gen-title">Generator</div>
-    <h2 class="gen-heading">Build a sniffer one-liner</h2>
+    <h3 class="gen-heading">Build a sniffer one-liner</h3>
 
     <div class="form-grid">
       <div class="form-field">
@@ -1013,19 +1582,19 @@ diagnose debug flow filter clear</pre>
       </div>
       <div class="form-field">
         <label class="form-label" for="sn-host1">Host 1</label>
-        <input class="form-input" id="sn-host1" type="text" placeholder="10.1.1.10" autocomplete="off">
+        <input class="form-input" id="sn-host1" data-validate="ip" type="text" placeholder="10.1.1.10" autocomplete="off">
       </div>
       <div class="form-field">
         <label class="form-label" for="sn-host2">Host 2 (optional)</label>
-        <input class="form-input" id="sn-host2" type="text" placeholder="10.2.2.20" autocomplete="off">
+        <input class="form-input" id="sn-host2" data-validate="ip" type="text" placeholder="10.2.2.20" autocomplete="off">
       </div>
       <div class="form-field">
         <label class="form-label" for="sn-port">Port (optional)</label>
-        <input class="form-input" id="sn-port" type="text" placeholder="443" autocomplete="off">
+        <input class="form-input" id="sn-port" data-validate="port" type="text" placeholder="443" autocomplete="off">
       </div>
       <div class="form-field">
         <label class="form-label" for="sn-verb">Verbosity</label>
-        <select class="form-select" id="sn-verb">
+        <select class="form-select" id="sn-verb" data-validate="select">
           <option value="1">1 · headers only</option>
           <option value="2">2 · headers + IP data</option>
           <option value="3">3 · headers + ethernet</option>
@@ -1040,6 +1609,10 @@ diagnose debug flow filter clear</pre>
       <button class="btn btn-primary" id="sn-generate">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         Generate
+      </button>
+      <button class="btn btn-ghost" id="sn-reset" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 4 3 10 9 10"/></svg>
+        Reset
       </button>
     </div>
 
@@ -1084,18 +1657,18 @@ diagnose debug flow filter clear</pre>
 ============================================================ -->
 <section class="panel" data-panel="vpn">
   <div class="panel-header">
-    <h1 class="panel-title">VPN</h1>
+    <h2 class="panel-title">VPN</h2>
     <p class="panel-sub">IPsec, SSL VPN, and Remote Access. Filtered IKE debugs and status commands.</p>
   </div>
 
   <div class="gen-card">
     <div class="gen-title">Generator</div>
-    <h2 class="gen-heading">IPsec / RAVPN IKE debug (filtered)</h2>
+    <h3 class="gen-heading">IPsec / RAVPN IKE debug (filtered)</h3>
 
     <div class="form-grid">
       <div class="form-field">
         <label class="form-label required" for="ike-ip">Remote peer / client IP</label>
-        <input class="form-input" id="ike-ip" type="text" placeholder="203.0.113.5" autocomplete="off">
+        <input class="form-input" id="ike-ip" data-validate="ip" type="text" placeholder="203.0.113.5" autocomplete="off">
       </div>
     </div>
 
@@ -1103,6 +1676,10 @@ diagnose debug flow filter clear</pre>
       <button class="btn btn-primary" id="ike-generate">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         Generate
+      </button>
+      <button class="btn btn-ghost" id="ike-reset" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 4 3 10 9 10"/></svg>
+        Reset
       </button>
     </div>
 
@@ -1192,7 +1769,7 @@ diag debug enable</pre>
 ============================================================ -->
 <section class="panel" data-panel="routing">
   <div class="panel-header">
-    <h1 class="panel-title">Routing &amp; BGP</h1>
+    <h2 class="panel-title">Routing &amp; BGP</h2>
     <p class="panel-sub">Route inspection, BGP peering, soft reconfigs.</p>
   </div>
 
@@ -1263,7 +1840,7 @@ unset shutdown             # bring it back</pre>
 ============================================================ -->
 <section class="panel" data-panel="sdwan">
   <div class="panel-header">
-    <h1 class="panel-title">SD-WAN</h1>
+    <h2 class="panel-title">SD-WAN</h2>
     <p class="panel-sub">Health-check, service mapping, and the FIB interaction model.</p>
   </div>
 
@@ -1347,7 +1924,7 @@ diagnose firewall internet-service-app match root &lt;ip&gt;</pre>
 ============================================================ -->
 <section class="panel" data-panel="firewall">
   <div class="panel-header">
-    <h1 class="panel-title">Firewall</h1>
+    <h2 class="panel-title">Firewall</h2>
     <p class="panel-sub">Sessions, NAT, policy lookup, Geo-IP.</p>
   </div>
 
@@ -1506,7 +2083,7 @@ end</pre>
 ============================================================ -->
 <section class="panel" data-panel="system">
   <div class="panel-header">
-    <h1 class="panel-title">HA &amp; System</h1>
+    <h2 class="panel-title">HA &amp; System</h2>
     <p class="panel-sub">Failover, sync checks, LTE APN, FortiGuard, performance.</p>
   </div>
 
@@ -1703,7 +2280,7 @@ end</pre>
 ============================================================ -->
 <section class="panel" data-panel="voip">
   <div class="panel-header">
-    <h1 class="panel-title">VoIP &amp; SIP</h1>
+    <h2 class="panel-title">VoIP &amp; SIP</h2>
     <p class="panel-sub">SIP ALG management for 3CX and similar PBX deployments.</p>
   </div>
 
@@ -1778,7 +2355,7 @@ end
 
   <div class="card">
     <div class="card-header">
-      <div class="card-title">3CX preferred settings</div>
+      <div class="card-title">3CX / Bluerock / WPW preferred settings</div>
       <span class="card-tag">3CX preset</span>
     </div>
     <div class="card-body no-pad">
@@ -1845,7 +2422,7 @@ end</pre>
 ============================================================ -->
 <section class="panel" data-panel="archive">
   <div class="panel-header">
-    <h1 class="panel-title">Concepts</h1>
+    <h2 class="panel-title">Concepts</h2>
     <p class="panel-sub">Background knowledge and reference material. More entries to come.</p>
   </div>
 
@@ -3574,6 +4151,16 @@ diag sniffer packet any 'host x.x.x.x' 4 0 a    # 'a' includes timestamp; check 
 </footer>
 
 <!-- ============================================================
+     Scroll-to-top FAB
+============================================================ -->
+<button class="fab-top" id="fabTop" aria-label="Scroll to top">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="19" x2="12" y2="5"/>
+    <polyline points="5 12 12 5 19 12"/>
+  </svg>
+</button>
+
+<!-- ============================================================
      Search modal
 ============================================================ -->
 <div class="search-modal" id="searchModal">
@@ -3612,16 +4199,75 @@ function isValidPort(s) {
   return n >= 1 && n <= 65535;
 }
 function flashInvalid(el) {
-  el.style.borderColor = 'var(--accent)';
-  setTimeout(() => el.style.borderColor = '', 1500);
+  // Used by generators when the user clicks Generate with a bad/empty value.
+  // We just force the invalid class on; the live input handler will clear it
+  // once the user starts correcting.
+  el.classList.add('is-invalid');
+  el.classList.remove('is-valid');
 }
-// Live feedback: clear the red border as soon as the user starts correcting the value
+
+// ============================================================
+// Live validation
+// IP fields    : empty = neutral, valid IPv4 = green, anything else = red.
+// Port fields  : empty = neutral, 1-65535 = green, anything else = red.
+// Select fields: always valid once the user has interacted (any value picked
+//                is by definition one of the allowed options).
+// ============================================================
+function applyValidationState(el) {
+  if (!el || !el.dataset || !el.dataset.validate) return;
+
+  // Selects are always valid (they only have allowed values). We only mark
+  // them green once the user has actually touched them, so the form doesn't
+  // open as a wall of green on first paint.
+  if (el.dataset.validate === 'select') {
+    if (el.dataset.touched === '1') {
+      el.classList.add('is-valid');
+    }
+    return;
+  }
+
+  const v = el.value.trim();
+  // Empty = neutral state (no class)
+  if (!v) {
+    el.classList.remove('is-valid', 'is-invalid');
+    return;
+  }
+  let ok = false;
+  if (el.dataset.validate === 'ip')   ok = isValidIPv4(v);
+  if (el.dataset.validate === 'port') ok = isValidPort(v);
+  el.classList.toggle('is-valid',   ok);
+  el.classList.toggle('is-invalid', !ok);
+}
+
 document.addEventListener('input', (e) => {
   const el = e.target;
-  if (el && el.classList && el.classList.contains('form-input') && el.style.borderColor) {
-    el.style.borderColor = '';
+  if (!el || !el.classList || !el.classList.contains('form-input')) return;
+
+  // Clear any stale inline border colour from older code paths
+  if (el.style.borderColor) el.style.borderColor = '';
+
+  // If the field is validated, run live check
+  if (el.dataset && el.dataset.validate) {
+    applyValidationState(el);
   }
 });
+
+// Selects fire `change`, not `input`, when the user picks an option.
+// Mark them as touched + valid the moment they're interacted with.
+// Guard with isTrusted: programmatic events (e.g. dispatched by Reset) must
+// NOT count as a user interaction.
+document.addEventListener('change', (e) => {
+  if (!e.isTrusted) return;
+  const el = e.target;
+  if (!el || !el.classList || !el.classList.contains('form-select')) return;
+  if (el.dataset && el.dataset.validate === 'select') {
+    el.dataset.touched = '1';
+    applyValidationState(el);
+  }
+});
+
+// Initial pass in case the browser autofilled something on load
+document.querySelectorAll('.form-input[data-validate]').forEach(applyValidationState);
 // Enter key on any .form-input inside a .gen-card triggers that card's Generate button
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Enter' || e.isComposing) return;
@@ -3641,19 +4287,28 @@ document.addEventListener('keydown', (e) => {
 // ============================================================
 const tabs = document.querySelectorAll('.tab');
 const panels = document.querySelectorAll('.panel');
+const tabsBar = document.querySelector('.tabs');
 
-function showTab(name) {
+function showTab(name, opts = {}) {
   tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === name));
   panels.forEach(p => p.classList.toggle('active', p.dataset.panel === name));
   try { history.replaceState(null, '', '#' + name); } catch (e) { /* sandboxed iframe */ }
-  window.scrollTo({ top: 0, behavior: 'instant' });
+  if (opts.scroll !== false) {
+    // Scroll to just below the sticky header so the active panel content is visible.
+    // The tabs themselves are sticky and will pin against the header.
+    const header = document.getElementById('siteHeader');
+    const headerH = header ? header.getBoundingClientRect().height : 64;
+    const target = tabsBar ? tabsBar.getBoundingClientRect().top + window.scrollY - headerH : 0;
+    window.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
+  }
 }
 
 tabs.forEach(t => t.addEventListener('click', () => showTab(t.dataset.tab)));
 
 const initialHash = location.hash.replace('#', '');
 if (initialHash && document.querySelector(`.tab[data-tab="${initialHash}"]`)) {
-  showTab(initialHash);
+  // Don't auto-scroll on initial load — let the user see the hero.
+  showTab(initialHash, { scroll: false });
 }
 
 // ============================================================
@@ -3813,6 +4468,74 @@ document.getElementById('df-stop').addEventListener('click', () => {
   ].join('\n');
   dfOutWrap.classList.remove('empty');
   dfOutWrap.querySelector('.copy-btn').style.display = 'flex';
+});
+
+// ============================================================
+// Reset handlers — clear inputs, drop validation states, restore placeholder.
+// Shared helper so behaviour stays identical across generators.
+// ============================================================
+function resetGenerator(cfg) {
+  const card = document.getElementById(cfg.scopeId).closest('.gen-card');
+  if (!card) return;
+
+  // Drop focus so no :focus ring lingers on the field the user just left
+  if (document.activeElement && card.contains(document.activeElement)) {
+    document.activeElement.blur();
+  }
+
+  card.querySelectorAll('.form-input').forEach(inp => {
+    inp.value = inp.getAttribute('value') || '';
+    inp.classList.remove('is-valid', 'is-invalid');
+    inp.style.borderColor = '';
+  });
+
+  card.querySelectorAll('.form-select').forEach(sel => {
+    const def = sel.querySelector('option[selected]') || sel.options[0];
+    if (def) sel.value = def.value;
+    sel.classList.remove('is-valid', 'is-invalid');
+    delete sel.dataset.touched;
+  });
+
+  // Reset output block back to its placeholder
+  const out = document.getElementById(cfg.outId);
+  if (out) {
+    out.textContent = cfg.placeholder;
+    const wrap = out.closest('.code-wrap');
+    if (wrap) {
+      wrap.classList.add('empty');
+      const cp = wrap.querySelector('.copy-btn');
+      if (cp) cp.style.display = 'none';
+    }
+  }
+
+  // Re-run any card-specific sync (e.g. Debug Flow's port-field visibility,
+  // which depends on the protocol select).
+  if (typeof cfg.afterReset === 'function') cfg.afterReset();
+}
+
+document.getElementById('df-reset').addEventListener('click', () => {
+  resetGenerator({
+    scopeId: 'df-generate',
+    outId: 'df-out',
+    placeholder: 'Fill in a destination or source IP and click Generate.',
+    afterReset: syncDfPortVisibility,
+  });
+});
+
+document.getElementById('sn-reset').addEventListener('click', () => {
+  resetGenerator({
+    scopeId: 'sn-generate',
+    outId: 'sn-out',
+    placeholder: 'Fill in at least one host and click Generate.',
+  });
+});
+
+document.getElementById('ike-reset').addEventListener('click', () => {
+  resetGenerator({
+    scopeId: 'ike-generate',
+    outId: 'ike-out',
+    placeholder: 'Enter the peer IP and click Generate.',
+  });
 });
 
 // ============================================================
@@ -4023,6 +4746,53 @@ if (!navigator.platform.toUpperCase().includes('MAC')) {
     if (k.textContent === '⌘K') k.textContent = 'Ctrl K';
   });
 }
+
+// ============================================================
+// Header condense on scroll + scroll-to-top FAB + measure header height
+// ============================================================
+(function () {
+  const header = document.getElementById('siteHeader');
+  const fab = document.getElementById('fabTop');
+  let lastY = -1;
+  let ticking = false;
+
+  function measureHeader() {
+    if (!header) return;
+    const h = Math.round(header.getBoundingClientRect().height);
+    document.documentElement.style.setProperty('--header-h', h + 'px');
+    document.documentElement.style.scrollPaddingTop = (h + 60) + 'px';
+  }
+
+  function onScroll() {
+    const y = window.scrollY;
+    if (y === lastY) { ticking = false; return; }
+    lastY = y;
+
+    if (header) header.classList.toggle('is-scrolled', y > 8);
+    if (fab) fab.classList.toggle('visible', y > 400);
+    ticking = false;
+  }
+
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      requestAnimationFrame(onScroll);
+      ticking = true;
+    }
+  }, { passive: true });
+
+  window.addEventListener('resize', measureHeader);
+
+  if (fab) {
+    fab.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+
+  // Initial state
+  measureHeader();
+  onScroll();
+})();
+
 </script>
 </body>
 </html>
