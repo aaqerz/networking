@@ -1315,6 +1315,37 @@ footer {
 
 .note strong { color: var(--text); }
 
+/* Inline warning shown above a generator's output when the user has built
+   a filter that's likely to flood the console (e.g. protocol-only with no
+   IP filters). Amber, soft, conversational — not an error. */
+.df-warn {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.02), transparent),
+    rgba(255, 159, 10, 0.07);
+  border: 1px solid rgba(255, 159, 10, 0.25);
+  border-radius: var(--r-sm);
+  color: var(--warn);
+  font-size: 12.5px;
+  line-height: 1.5;
+  letter-spacing: -0.005em;
+  animation: fade-up 0.4s var(--ease-out);
+}
+.df-warn[hidden] { display: none; }
+.df-warn svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--warn);
+}
+.df-warn span { color: var(--text-secondary); }
+.df-warn strong { color: var(--warn); font-weight: 600; }
+
 /* ============================================================
    15. Scroll-to-top FAB
    ============================================================ */
@@ -1487,12 +1518,16 @@ footer {
           <option value="icmp">ICMP (1)</option>
           <option value="tcp">TCP (6)</option>
           <option value="udp">UDP (17)</option>
-          <option value="any">Any</option>
+          <option value="any">Any (custom #)</option>
         </select>
       </div>
       <div class="form-field" id="df-port-wrap" style="display:none;">
         <label class="form-label" for="df-port">Port (optional)</label>
         <input class="form-input" id="df-port" data-validate="port" type="text" placeholder="443" autocomplete="off">
+      </div>
+      <div class="form-field" id="df-protonum-wrap" style="display:none;">
+        <label class="form-label" for="df-protonum">Protocol # (1&ndash;254)</label>
+        <input class="form-input" id="df-protonum" data-validate="protonum" type="text" placeholder="50 (ESP)" autocomplete="off">
       </div>
     </div>
 
@@ -1516,12 +1551,16 @@ footer {
     </div>
 
     <div style="margin-top:20px;">
+      <div class="df-warn" id="df-warn" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span id="df-warn-text"></span>
+      </div>
       <div class="code-wrap empty" id="df-out-wrap">
         <button class="copy-btn" data-copy="df-out" style="display:none;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
           Copy
         </button>
-        <pre class="code-block" id="df-out">Fill in a destination or source IP and click Generate.</pre>
+        <pre class="code-block" id="df-out">Set at least one filter (source IP, destination IP, or protocol), then click Generate.</pre>
       </div>
     </div>
   </div>
@@ -4198,6 +4237,16 @@ function isValidPort(s) {
   const n = Number(s);
   return n >= 1 && n <= 65535;
 }
+function isValidProtoNum(s) {
+  // IP protocol number. 0 is HOPOPT (uncommon, but valid); 255 is reserved.
+  // FortiOS accepts the IANA range. We constrain to 1-254 for everyday usage
+  // (matches what the user asked for, and excludes reserved/edge values).
+  if (!s || typeof s !== 'string') return false;
+  if (!/^\d+$/.test(s)) return false;
+  if (s.length > 1 && s[0] === '0') return false;
+  const n = Number(s);
+  return n >= 1 && n <= 254;
+}
 function flashInvalid(el) {
   // Used by generators when the user clicks Generate with a bad/empty value.
   // We just force the invalid class on; the live input handler will clear it
@@ -4208,10 +4257,11 @@ function flashInvalid(el) {
 
 // ============================================================
 // Live validation
-// IP fields    : empty = neutral, valid IPv4 = green, anything else = red.
-// Port fields  : empty = neutral, 1-65535 = green, anything else = red.
-// Select fields: always valid once the user has interacted (any value picked
-//                is by definition one of the allowed options).
+// IP fields      : empty = neutral, valid IPv4 = green, anything else = red.
+// Port fields    : empty = neutral, 1-65535 = green, anything else = red.
+// Protonum field : empty = neutral, 1-254 = green, anything else = red.
+// Select fields  : always valid once the user has interacted (any value picked
+//                  is by definition one of the allowed options).
 // ============================================================
 function applyValidationState(el) {
   if (!el || !el.dataset || !el.dataset.validate) return;
@@ -4233,8 +4283,9 @@ function applyValidationState(el) {
     return;
   }
   let ok = false;
-  if (el.dataset.validate === 'ip')   ok = isValidIPv4(v);
-  if (el.dataset.validate === 'port') ok = isValidPort(v);
+  if (el.dataset.validate === 'ip')       ok = isValidIPv4(v);
+  if (el.dataset.validate === 'port')     ok = isValidPort(v);
+  if (el.dataset.validate === 'protonum') ok = isValidProtoNum(v);
   el.classList.toggle('is-valid',   ok);
   el.classList.toggle('is-invalid', !ok);
 }
@@ -4268,11 +4319,14 @@ document.addEventListener('change', (e) => {
 
 // Initial pass in case the browser autofilled something on load
 document.querySelectorAll('.form-input[data-validate]').forEach(applyValidationState);
-// Enter key on any .form-input inside a .gen-card triggers that card's Generate button
+// Enter key on any .form-input OR .form-select inside a .gen-card triggers
+// that card's Generate button. (Selects need explicit inclusion since they
+// don't share the form-input class.)
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Enter' || e.isComposing) return;
   const el = e.target;
-  if (!el || !el.classList || !el.classList.contains('form-input')) return;
+  if (!el || !el.classList) return;
+  if (!el.classList.contains('form-input') && !el.classList.contains('form-select')) return;
   const card = el.closest('.gen-card');
   if (!card) return;
   const btn = card.querySelector('button[id$="-generate"]');
@@ -4344,6 +4398,8 @@ document.addEventListener('click', (e) => {
 // ============================================================
 const dfProto = document.getElementById('df-proto');
 const dfPortWrap = document.getElementById('df-port-wrap');
+const dfProtoNumWrap = document.getElementById('df-protonum-wrap');
+const dfProtoNum = document.getElementById('df-protonum');
 const dfDst = document.getElementById('df-dst');
 const dfSrc = document.getElementById('df-src');
 const dfPort = document.getElementById('df-port');
@@ -4352,8 +4408,11 @@ const dfOutWrap = document.getElementById('df-out-wrap');
 const dfRecent = document.getElementById('df-recent');
 
 function syncDfPortVisibility() {
+  // Name kept for backwards compatibility with the reset helper.
+  // TCP/UDP -> show Port. Any -> show Protocol number. ICMP -> show neither.
   const v = dfProto.value;
-  dfPortWrap.style.display = (v === 'tcp' || v === 'udp') ? 'flex' : 'none';
+  dfPortWrap.style.display     = (v === 'tcp' || v === 'udp') ? 'flex' : 'none';
+  dfProtoNumWrap.style.display = (v === 'any')                ? 'flex' : 'none';
 }
 dfProto.addEventListener('change', syncDfPortVisibility);
 syncDfPortVisibility();
@@ -4411,10 +4470,20 @@ renderRecent();
 document.getElementById('df-generate').addEventListener('click', () => {
   const dst = dfDst.value.trim();
   const src = dfSrc.value.trim();
+  const proto = dfProto.value;
+  const port = dfPort.value.trim();
+  const protoNum = dfProtoNum.value.trim();
 
-  if (!dst && !src) {
+  // A "specific protocol" is anything except plain Any with no proto number.
+  // ICMP/TCP/UDP always count. Any + custom proto number counts. Any + blank
+  // does NOT count (it would mean no filter at all).
+  const hasSpecificProto = (proto !== 'any') || (proto === 'any' && protoNum);
+
+  // Reject if user gave us literally nothing to filter on.
+  if (!dst && !src && !hasSpecificProto) {
     [dfDst, dfSrc].forEach(flashInvalid);
     dfDst.focus();
+    showDfWarn('Pick at least one filter &mdash; source IP, destination IP, or a specific protocol &mdash; before generating. Without a filter, debug flow will trace every packet through the firewall.');
     return;
   }
 
@@ -4428,13 +4497,17 @@ document.getElementById('df-generate').addEventListener('click', () => {
     return;
   }
 
-  const proto = dfProto.value;
-  const port = dfPort.value.trim();
-
   // Validate port if filled and protocol uses it
   if (port && (proto === 'tcp' || proto === 'udp') && !isValidPort(port)) {
     flashInvalid(dfPort);
     dfPort.focus();
+    return;
+  }
+
+  // Validate custom protocol number if user filled it (only meaningful when proto = any)
+  if (proto === 'any' && protoNum && !isValidProtoNum(protoNum)) {
+    flashInvalid(dfProtoNum);
+    dfProtoNum.focus();
     return;
   }
 
@@ -4446,7 +4519,12 @@ document.getElementById('df-generate').addEventListener('click', () => {
   if (dst) lines.push(`diagnose debug flow filter daddr ${dst}`);
   if (src) lines.push(`diagnose debug flow filter saddr ${src}`);
   const protoMap = { icmp: 1, tcp: 6, udp: 17 };
-  if (proto !== 'any') lines.push(`diagnose debug flow filter proto ${protoMap[proto]}`);
+  if (proto !== 'any') {
+    lines.push(`diagnose debug flow filter proto ${protoMap[proto]}`);
+  } else if (protoNum) {
+    // Custom IP protocol number, e.g. 50 (ESP), 47 (GRE), 89 (OSPF)
+    lines.push(`diagnose debug flow filter proto ${protoNum}`);
+  }
   if (port && (proto === 'tcp' || proto === 'udp')) lines.push(`diagnose debug flow filter port ${port}`);
   lines.push('diagnose debug flow show function-name enable');
   lines.push('diagnose debug flow show iprope enable');
@@ -4456,8 +4534,33 @@ document.getElementById('df-generate').addEventListener('click', () => {
   dfOut.textContent = lines.join('\n');
   dfOutWrap.classList.remove('empty');
   dfOutWrap.querySelector('.copy-btn').style.display = 'flex';
+
+  // Show a load warning when the filter is wide (protocol only, no IP scoping).
+  // Common cases this catches: pure ICMP debug on a busy box, ESP-only on a
+  // VPN hub, etc.
+  if (!dst && !src && hasSpecificProto) {
+    let protoLabel = '';
+    if (proto !== 'any') protoLabel = proto.toUpperCase();
+    else if (protoNum)   protoLabel = `protocol ${protoNum}`;
+    showDfWarn(`Heads up &mdash; this traces <strong>every ${protoLabel} packet</strong> through the firewall. On a busy box this can spike CPU and flood your console. Add a source or destination IP to scope it down.`);
+  } else {
+    hideDfWarn();
+  }
+
   saveRecent({ dst, src });
 });
+
+function showDfWarn(html) {
+  const w = document.getElementById('df-warn');
+  const t = document.getElementById('df-warn-text');
+  if (!w || !t) return;
+  t.innerHTML = html;
+  w.hidden = false;
+}
+function hideDfWarn() {
+  const w = document.getElementById('df-warn');
+  if (w) w.hidden = true;
+}
 
 document.getElementById('df-stop').addEventListener('click', () => {
   dfOut.textContent = [
@@ -4468,6 +4571,7 @@ document.getElementById('df-stop').addEventListener('click', () => {
   ].join('\n');
   dfOutWrap.classList.remove('empty');
   dfOutWrap.querySelector('.copy-btn').style.display = 'flex';
+  hideDfWarn();
 });
 
 // ============================================================
@@ -4517,8 +4621,8 @@ document.getElementById('df-reset').addEventListener('click', () => {
   resetGenerator({
     scopeId: 'df-generate',
     outId: 'df-out',
-    placeholder: 'Fill in a destination or source IP and click Generate.',
-    afterReset: syncDfPortVisibility,
+    placeholder: 'Set at least one filter (source IP, destination IP, or protocol), then click Generate.',
+    afterReset: () => { syncDfPortVisibility(); hideDfWarn(); },
   });
 });
 
