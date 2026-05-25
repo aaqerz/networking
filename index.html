@@ -1838,12 +1838,12 @@ show system interface</pre>
         <div class="code-wrap">
           <button class="copy-btn" data-copy-text="get router info bgp sum
 get router info bgp network                # see weight
-get router info bgp network &lt;x.x.x.x&gt;
+get router info bgp network &lt;203.0.113.10&gt;
 get router info bgp neighbors &lt;ip&gt; advertised-routes
 get router info bgp neighbors &lt;ip&gt; received-routes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
           <pre class="code-block">get router info bgp sum
 get router info bgp network                # see weight
-get router info bgp network &lt;x.x.x.x&gt;
+get router info bgp network &lt;203.0.113.10&gt;
 get router info bgp neighbors &lt;ip&gt; advertised-routes
 get router info bgp neighbors &lt;ip&gt; received-routes</pre>
         </div>
@@ -2224,10 +2224,10 @@ show sys dns</pre>
       <div class="card-body no-pad">
         <div class="code-wrap">
           <button class="copy-btn" data-copy-text="get system arp
-diag sys arp delete &lt;port&gt; &lt;x.x.x.x&gt;
+diag sys arp delete &lt;port&gt; &lt;203.0.113.10&gt;
 get hardware nic &lt;port&gt;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
           <pre class="code-block">get system arp
-diag sys arp delete &lt;port&gt; &lt;x.x.x.x&gt;
+diag sys arp delete &lt;port&gt; &lt;203.0.113.10&gt;
 get hardware nic &lt;port&gt;</pre>
         </div>
       </div>
@@ -2272,11 +2272,11 @@ end</pre>
         <button class="copy-btn" data-copy-text="diag traffictest client-intf port1
 diag traffictest server-intf port1
 diag traffictest port 5201
-diag traffictest run -c 116.216.16.4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+diag traffictest run -c 203.0.113.10"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
         <pre class="code-block">diag traffictest client-intf port1
 diag traffictest server-intf port1
 diag traffictest port 5201
-diag traffictest run -c 116.216.16.4</pre>
+diag traffictest run -c 203.0.113.10</pre>
       </div>
     </div>
   </div>
@@ -4118,7 +4118,7 @@ diagnose firewall shaper interface-shaper list
 diagnose firewall iprope list 100015
 diagnose netlink interface list &lt;intf&gt;
 get system performance status
-diag sniffer packet any 'host x.x.x.x' 4 0 a    # 'a' includes timestamp; check TOS byte</pre>
+diag sniffer packet any 'host 203.0.113.10' 4 0 a    # 'a' includes timestamp; check TOS byte</pre>
       </div>
       <ul>
         <li><code>diag firewall shaper traffic-shaper list</code> shows per-shaper counters: current bandwidth, packets dropped, bytes dropped. Drops here mean your shaper is doing its job.</li>
