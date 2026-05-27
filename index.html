@@ -1816,22 +1816,28 @@ diag debug enable</pre>
     <h2 class="panel-title">Routing &amp; BGP</h2>
     <p class="panel-sub">Route inspection, BGP peering, soft reconfigs.</p>
   </div>
-
   <div class="row-2col">
     <div class="card">
-      <div class="card-header"><div class="card-title">Route lookup for a host</div></div>
+      <div class="card-header"><div class="card-title">Routing table inspection</div></div>
       <div class="card-body no-pad">
         <div class="code-wrap">
-          <button class="copy-btn" data-copy-text="get router info routing-table details &lt;host&gt;
+          <button class="copy-btn" data-copy-text="get router info routing-table all
 get router info routing-table database
+get router info routing-table details &lt;host&gt;
+get router info routing-table bgp
+get router info routing-table static
+get router info routing-table connected
 show system interface"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
-          <pre class="code-block">get router info routing-table details &lt;host&gt;
+          <pre class="code-block">get router info routing-table all
 get router info routing-table database
+get router info routing-table details &lt;host&gt;
+get router info routing-table bgp
+get router info routing-table static
+get router info routing-table connected
 show system interface</pre>
         </div>
       </div>
     </div>
-
     <div class="card">
       <div class="card-header"><div class="card-title">BGP inspection</div></div>
       <div class="card-body no-pad">
@@ -1840,17 +1846,22 @@ show system interface</pre>
 get router info bgp network                # see weight
 get router info bgp network &lt;203.0.113.10&gt;
 get router info bgp neighbors &lt;ip&gt; advertised-routes
-get router info bgp neighbors &lt;ip&gt; received-routes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
+get router info bgp neighbors &lt;ip&gt; received-routes
+get router info bgp neighbors &lt;ip&gt; routes
+diagnose ip router bgp all enable
+diagnose ip router bgp level info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
           <pre class="code-block">get router info bgp sum
 get router info bgp network                # see weight
 get router info bgp network &lt;203.0.113.10&gt;
 get router info bgp neighbors &lt;ip&gt; advertised-routes
-get router info bgp neighbors &lt;ip&gt; received-routes</pre>
+get router info bgp neighbors &lt;ip&gt; received-routes
+get router info bgp neighbors &lt;ip&gt; routes
+diagnose ip router bgp all enable
+diagnose ip router bgp level info</pre>
         </div>
       </div>
     </div>
   </div>
-
   <div class="card">
     <div class="card-header">
       <div class="card-title">BGP peer reset</div>
@@ -1859,21 +1870,24 @@ get router info bgp neighbors &lt;ip&gt; received-routes</pre>
     <div class="card-body no-pad">
       <div class="code-wrap">
         <button class="copy-btn" data-copy-text="execute router clear bgp all soft           # soft reconfig all
-execute router clear bgp ip 172.16.x.x      # specific neighbor
-
+execute router clear bgp ip 172.16.x.x soft # soft reset specific neighbor
+execute router clear bgp ip 172.16.x.x in   # soft inbound only
+execute router clear bgp ip 172.16.x.x out  # soft outbound only
+execute router clear bgp ip 172.16.x.x      # hard reset specific neighbor
 # Inside neighbor:
 set shutdown enable        # take peer down
 unset shutdown             # bring it back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
         <pre class="code-block">execute router clear bgp all soft           # soft reconfig all
-execute router clear bgp ip 172.16.x.x      # specific neighbor
-
+execute router clear bgp ip 172.16.x.x soft # soft reset specific neighbor
+execute router clear bgp ip 172.16.x.x in   # soft inbound only
+execute router clear bgp ip 172.16.x.x out  # soft outbound only
+execute router clear bgp ip 172.16.x.x      # hard reset specific neighbor
 # Inside neighbor:
 set shutdown enable        # take peer down
 unset shutdown             # bring it back</pre>
       </div>
     </div>
   </div>
-
   <div class="note">
     <strong>Soft reset</strong> uses the route-refresh capability and doesn't tear the session. Hard reset (<code style="font-family:var(--mono);background:var(--bg-elevated);padding:1px 5px;border-radius:3px;">execute router clear bgp all</code>) bounces the TCP session and re-establishes from scratch. Always try soft first.
   </div>
