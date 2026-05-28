@@ -2714,7 +2714,7 @@ end</pre>
         <div class="card" style="margin-bottom: 20px;">
           <div class="card-header">
             <div class="card-title">Real-Time Kernel Packet Flow Trace</div>
-            <span class="card-meta">iprope trace</span>
+            <span class="card-meta">kernel trace</span>
           </div>
           <div class="card-body no-pad">
             <div class="code-wrap">
@@ -2722,14 +2722,12 @@ end</pre>
 diagnose debug flow filter src 192.168.10.25
 diagnose debug flow filter dport 443
 diagnose debug flow show function-name enable
-diagnose debug flow show iprope enable
 diagnose debug flow trace start 100
 diagnose debug enable"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
               <pre class="code-block">diagnose debug reset
 diagnose debug flow filter src &lt;ip&gt;
 diagnose debug flow filter dport &lt;port&gt;
 diagnose debug flow show function-name enable
-diagnose debug flow show iprope enable
 diagnose debug flow trace start 100
 diagnose debug enable</pre>
             </div>
@@ -4535,7 +4533,6 @@ document.getElementById('df-generate').addEventListener('click', () => {
   }
   if (port && (proto === 'tcp' || proto === 'udp')) lines.push(`diagnose debug flow filter port ${port}`);
   lines.push('diagnose debug flow show function-name enable');
-  lines.push('diagnose debug flow show iprope enable');
   lines.push('diagnose debug flow trace start 999');
   lines.push('diagnose debug enable');
 
