@@ -1526,13 +1526,13 @@ footer {
           <option value="any">Any (custom #)</option>
         </select>
       </div>
-      <div class="form-field" id="df-port-wrap" style="display:none;">
-        <label class="form-label" for="df-port">Port (optional)</label>
-        <input class="form-input" id="df-port" data-validate="port" type="text" placeholder="443" autocomplete="off">
-      </div>
       <div class="form-field" id="df-protonum-wrap" style="display:none;">
         <label class="form-label" for="df-protonum">Protocol # (1&ndash;254)</label>
         <input class="form-input" id="df-protonum" data-validate="protonum" type="text" placeholder="50 (ESP)" autocomplete="off">
+      </div>
+      <div class="form-field" id="df-port-wrap" style="display:none;">
+        <label class="form-label" for="df-port">Port (optional)</label>
+        <input class="form-input" id="df-port" data-validate="port" type="text" placeholder="443" autocomplete="off">
       </div>
     </div>
 
@@ -4415,9 +4415,10 @@ const dfRecent = document.getElementById('df-recent');
 
 function syncDfPortVisibility() {
   // Name kept for backwards compatibility with the reset helper.
-  // TCP/UDP -> show Port. Any -> show Protocol number. ICMP -> show neither.
+  // TCP/UDP -> show Port. Any -> show Protocol number + Port (for when you
+  // know the port but not whether it's TCP or UDP). ICMP -> show neither.
   const v = dfProto.value;
-  dfPortWrap.style.display     = (v === 'tcp' || v === 'udp') ? 'flex' : 'none';
+  dfPortWrap.style.display     = (v === 'tcp' || v === 'udp' || v === 'any') ? 'flex' : 'none';
   dfProtoNumWrap.style.display = (v === 'any')                ? 'flex' : 'none';
 }
 dfProto.addEventListener('change', syncDfPortVisibility);
@@ -4480,10 +4481,13 @@ document.getElementById('df-generate').addEventListener('click', () => {
   const port = dfPort.value.trim();
   const protoNum = dfProtoNum.value.trim();
 
-  // A "specific protocol" is anything except plain Any with no proto number.
-  // ICMP/TCP/UDP always count. Any + custom proto number counts. Any + blank
-  // does NOT count (it would mean no filter at all).
-  const hasSpecificProto = (proto !== 'any') || (proto === 'any' && protoNum);
+  // Port applies to TCP/UDP, and to Any (port known, L4 protocol unknown).
+  const usesPort = (proto === 'tcp' || proto === 'udp' || proto === 'any');
+
+  // A "specific protocol" is anything except plain Any with no proto number
+  // and no port. ICMP/TCP/UDP always count. Any + custom proto number or port
+  // counts. Any + both blank does NOT count (it would mean no filter at all).
+  const hasSpecificProto = (proto !== 'any') || !!protoNum || !!port;
 
   // Reject if user gave us literally nothing to filter on.
   if (!dst && !src && !hasSpecificProto) {
@@ -4504,7 +4508,7 @@ document.getElementById('df-generate').addEventListener('click', () => {
   }
 
   // Validate port if filled and protocol uses it
-  if (port && (proto === 'tcp' || proto === 'udp') && !isValidPort(port)) {
+  if (port && usesPort && !isValidPort(port)) {
     flashInvalid(dfPort);
     dfPort.focus();
     return;
@@ -4514,6 +4518,14 @@ document.getElementById('df-generate').addEventListener('click', () => {
   if (proto === 'any' && protoNum && !isValidProtoNum(protoNum)) {
     flashInvalid(dfProtoNum);
     dfProtoNum.focus();
+    return;
+  }
+
+  // Port only means something for port-based protocols (TCP 6, UDP 17, SCTP 132)
+  if (proto === 'any' && protoNum && port && !['6', '17', '132'].includes(String(Number(protoNum)))) {
+    flashInvalid(dfPort);
+    dfPort.focus();
+    showDfWarn(`Protocol ${protoNum} has no ports. Port filters only apply to TCP (6), UDP (17) or SCTP (132). Clear the port or the protocol number.`);
     return;
   }
 
@@ -4531,7 +4543,7 @@ document.getElementById('df-generate').addEventListener('click', () => {
     // Custom IP protocol number, e.g. 50 (ESP), 47 (GRE), 89 (OSPF)
     lines.push(`diagnose debug flow filter proto ${protoNum}`);
   }
-  if (port && (proto === 'tcp' || proto === 'udp')) lines.push(`diagnose debug flow filter port ${port}`);
+  if (port && usesPort) lines.push(`diagnose debug flow filter port ${port}`);
   lines.push('diagnose debug flow show function-name enable');
   lines.push('diagnose debug flow trace start 999');
   lines.push('diagnose debug enable');
@@ -4547,6 +4559,7 @@ document.getElementById('df-generate').addEventListener('click', () => {
     let protoLabel = '';
     if (proto !== 'any') protoLabel = proto.toUpperCase();
     else if (protoNum)   protoLabel = `protocol ${protoNum}`;
+    if (port && usesPort) protoLabel = protoLabel ? `${protoLabel} port ${port}` : `port ${port}`;
     showDfWarn(`Heads up &mdash; this traces <strong>every ${protoLabel} packet</strong> through the firewall. On a busy box this can spike CPU and flood your console. Add a source or destination IP to scope it down.`);
   } else {
     hideDfWarn();
